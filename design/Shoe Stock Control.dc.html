@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+@property --bg{syntax:'<color>';inherits:true;initial-value:oklch(0.975 0.005 85)}
+@property --surface{syntax:'<color>';inherits:true;initial-value:oklch(0.997 0.002 85)}
+@property --sunk{syntax:'<color>';inherits:true;initial-value:oklch(0.955 0.006 85)}
+@property --ink{syntax:'<color>';inherits:true;initial-value:oklch(0.24 0.012 60)}
+@property --muted{syntax:'<color>';inherits:true;initial-value:oklch(0.5 0.012 60)}
+@property --line{syntax:'<color>';inherits:true;initial-value:oklch(0.9 0.007 85)}
+@property --acc{syntax:'<color>';inherits:true;initial-value:oklch(0.5 0.15 150)}
+@property --acc-ink{syntax:'<color>';inherits:true;initial-value:oklch(1 0 0)}
+@property --acc-soft{syntax:'<color>';inherits:true;initial-value:oklch(0.955 0.033 150)}
+@property --acc-text{syntax:'<color>';inherits:true;initial-value:oklch(0.45 0.15 150)}
+@property --acc-line{syntax:'<color>';inherits:true;initial-value:oklch(0.86 0.06 150)}
+@property --neg{syntax:'<color>';inherits:true;initial-value:oklch(0.53 0.2 27)}
+@property --neg-soft{syntax:'<color>';inherits:true;initial-value:oklch(0.95 0.035 27)}
+@property --warn{syntax:'<color>';inherits:true;initial-value:oklch(0.55 0.15 50)}
+@property --warn-soft{syntax:'<color>';inherits:true;initial-value:oklch(0.95 0.06 85)}
+body{margin:0}
+*{box-sizing:border-box}
+a{color:var(--acc-text);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+a:hover{color:var(--ink)}
+input,select,button,textarea{font:inherit;color:inherit}
+input[type=number]::-webkit-inner-spin-button{opacity:.4}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+</style>
+</helmet>
+<div ref="{{ rootRef }}" style="min-height:100vh;display:flex;flex-direction:{{ L.dir }};background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:14px;line-height:1.45;font-variant-numeric:tabular-nums">
+
+  <sc-if value="{{ showLogin }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Login" style="position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;padding:24px;overflow:auto">
+      <div style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:22px">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="width:46px;height:46px;border-radius:12px;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center;font-weight:700;font-size:20px">K</div>
+          <div><div style="font-weight:700;font-size:19px;letter-spacing:-.01em">Kasut Stock Card</div><div style="font-size:13px;color:var(--muted)">Sign in to continue</div></div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px;display:flex;flex-direction:column;gap:18px">
+          
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600">Username
+            <input value="{{ lg.u }}" onChange="{{ lg.onU }}" onKeyDown="{{ lg.onKey }}" autocomplete="username" placeholder="{{ lg.uPh }}" style="height:46px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-size:15px;font-weight:400"></input>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600">PIN
+            <input type="password" inputmode="numeric" value="{{ lg.p }}" onChange="{{ lg.onP }}" onKeyDown="{{ lg.onKey }}" autocomplete="current-password" placeholder="4 digits" style="height:46px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-size:15px;font-weight:400;letter-spacing:.2em"></input>
+          </label>
+          <sc-if value="{{ lg.hasErr }}" hint-placeholder-val="{{ false }}"><div role="alert" style="padding:10px 12px;border-radius:10px;background:var(--neg-soft);color:var(--neg);font-size:13px;font-weight:600">{{ lg.err }}</div></sc-if>
+          <button onClick="{{ lg.submit }}" style="height:50px;border:0;border-radius:12px;background:var(--acc);color:var(--acc-ink);font-weight:700;font-size:16px;cursor:pointer">{{ lg.btn }}</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted)"><span>Demo: <b style="color:var(--ink)">{{ lg.demo }}</b></span><span style="display:flex;gap:12px"><a onClick="{{ lg.fillAdmin }}">Admin demo</a><a onClick="{{ lg.fillUser }}">User demo</a></span></div>
+      </div>
+    </div>
+  </sc-if>
+
+  <aside style="flex:0 0 auto;width:{{ L.navW }};height:{{ L.navH }};position:{{ L.navPos }};top:0;background:var(--surface);border-right:{{ L.navBR }};border-bottom:{{ L.navBB }};display:flex;flex-direction:{{ L.navDir }};flex-wrap:{{ L.navWrap }};gap:{{ L.navGap }};padding:{{ L.navPad }};z-index:5;transition:width 240ms ease, padding 240ms ease;overflow-x:hidden;overflow-y:auto">
+    <div style="display:flex;gap:10px;align-items:center;min-width:0;justify-content:space-between;flex-direction:{{ L.brandDir }}">
+      <div style="display:flex;gap:12px;align-items:center;min-width:0">
+        <div style="width:42px;height:42px;border-radius:12px;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center;font-weight:700;font-size:18px;flex:0 0 auto">K</div>
+        <sc-if value="{{ L.full }}" hint-placeholder-val="{{ true }}"><div style="min-width:0"><div style="font-weight:700;font-size:17px;letter-spacing:-.01em;white-space:nowrap">Kasut Stock Card</div><div style="font-size:13px;color:var(--muted)">{{ summary }}</div></div></sc-if>
+      </div>
+      <sc-if value="{{ L.canCollapse }}" hint-placeholder-val="{{ true }}"><button onClick="{{ toggleNav }}" title="{{ L.colTitle }}" aria-label="{{ L.colTitle }}" style="width:36px;height:36px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--muted);cursor:pointer;font-size:18px;flex:0 0 auto;padding:0" style-hover="background:var(--sunk);color:var(--ink)">{{ L.colIcon }}</button></sc-if>
+    </div>
+    <nav style="display:flex;flex-direction:{{ L.navDir }};flex-wrap:wrap;gap:2px">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+        <button onClick="{{ n.go }}" title="{{ n.label }}" style="white-space:nowrap;position:relative;display:flex;align-items:center;justify-content:{{ L.navJust }};gap:12px;height:54px;padding:{{ L.navBtnPad }};border:0;border-radius:12px;background:{{ n.bg }};color:var(--ink);font-weight:{{ n.fw }};text-align:left;cursor:pointer;font-size:17px;transition:background 200ms" style-hover="background:var(--sunk)">
+          <span style="position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:{{ n.bar }}"></span>
+          <span aria-hidden="true" style="width:24px;height:24px;background:{{ n.dot }};-webkit-mask:url({{ n.icon }}) center/contain no-repeat;mask:url({{ n.icon }}) center/contain no-repeat;flex:0 0 auto;transition:background 200ms"></span>
+          <sc-if value="{{ L.full }}" hint-placeholder-val="{{ true }}"><span style="flex:1">{{ n.label }}</span></sc-if>
+          <sc-if value="{{ n.hasBadge }}" hint-placeholder-val="{{ false }}">
+            <span style="min-width:22px;height:22px;padding:0 7px;border-radius:11px;background:var(--neg);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center">{{ n.badge }}</span>
+          </sc-if>
+        </button>
+      </sc-for>
+    </nav>
+    <sc-if value="{{ pinSide.show }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line);padding-top:6px">
+        <div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:10px 14px 6px">Pinned shoes</div>
+        <sc-for list="{{ pinSide.list }}" as="p"><button onClick="{{ p.open }}" title="{{ p.tag }}" style="display:flex;align-items:center;gap:10px;min-height:48px;padding:6px 14px;border:0;border-radius:10px;background:transparent;cursor:pointer;text-align:left;color:var(--ink)" style-hover="background:var(--sunk)"><span style="width:11px;height:11px;border-radius:3px;background:{{ p.cc }};flex:0 0 auto"></span><span style="flex:1;min-width:0"><span style="display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.tag }}</span><span style="display:block;font-size:12px;color:{{ p.subColor }}">{{ p.sub }}</span></span></button></sc-for>
+      </div>
+    </sc-if>
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;flex-direction:{{ L.themeDir }};padding:3px;gap:3px;background:var(--sunk);border-radius:10px">
+        <button onClick="{{ setLight }}" style="white-space:nowrap;flex:1;height:32px;border:0;border-radius:8px;background:{{ themeBtn.lightBg }};font-size:13px;cursor:pointer;font-weight:500">Light</button>
+        <button onClick="{{ setDark }}" style="white-space:nowrap;flex:1;height:32px;border:0;border-radius:8px;background:{{ themeBtn.darkBg }};font-size:13px;cursor:pointer;font-weight:500">Dark</button>
+      </div>
+      <sc-if value="{{ L.showSigned }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)"><span>Signed in as <b style="color:var(--ink)">{{ me.name }}</b> · {{ me.title }}</span><a onClick="{{ signOut }}">Sign out</a></div>
+      </sc-if>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}">
+      <div role="status" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:9px 32px;background:var(--ink);color:var(--surface);font-size:13px">
+        <span style="padding:3px 9px;border-radius:6px;background:var(--surface);color:var(--ink);font-size:11px;font-weight:700;letter-spacing:.08em;white-space:nowrap;flex:0 0 auto">ADMIN MODE</span>
+        <span style="flex:1;min-width:0">Full access · stock, items, categories, alarms and insights can all be changed.</span>
+        <a onClick="{{ signOut }}" style="color:var(--surface)">Sign out</a>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isStaffSales }}" hint-placeholder-val="{{ false }}">
+      <div role="status" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:9px 32px;background:var(--sunk);color:var(--ink);font-size:13px;border-bottom:1px solid var(--line)">
+        <span style="padding:3px 9px;border-radius:6px;border:1px solid var(--line);font-size:11px;font-weight:700;letter-spacing:.08em;white-space:nowrap;flex:0 0 auto">READ ONLY</span>
+        <span style="flex:1;min-width:0">You can view sales insights. Pinning and item changes need an admin account.</span>
+      </div>
+    </sc-if>
+    <sc-if value="{{ readOnly }}" hint-placeholder-val="{{ false }}">
+      <div role="status" style="padding:10px 32px;background:var(--warn-soft);color:var(--ink);font-size:13px;border-bottom:1px solid var(--line)"><b>Changes won't be saved in this view.</b> You can look around and try the forms, but nothing is stored. Open the app in its own window to key in real sales.</div>
+    </sc-if>
+
+    <!-- ============ NEW SALE / STOCK IN ============ -->
+    <sc-if value="{{ P.sale }}" hint-placeholder-val="{{ true }}">
+      <header style="position:relative;background:{{ hb.bg }};color:{{ hb.ink }};border-bottom:1px solid var(--acc-line);padding:{{ L.headPad }}">
+        <div style="position:absolute;left:0;right:0;top:0;height:4px;background:var(--acc)"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-end;justify-content:space-between">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:12px;letter-spacing:.07em;text-transform:uppercase;font-weight:600;opacity:.75">{{ home.eyebrow }}</div>
+            <h1 style="margin:0;font-size:30px;line-height:1.1;letter-spacing:-.02em;font-weight:700">{{ home.title }}</h1>
+            <p style="margin:0;font-size:14px;opacity:.8;text-wrap:pretty">{{ home.sub }}</p>
+          </div>
+          <div role="tablist" aria-label="Sale or stock in" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:20px;width:{{ L.toggleW }};box-shadow:0 4px 14px rgba(0,0,0,.06)">
+            <button role="tab" onClick="{{ setSale }}" style="display:flex;align-items:center;gap:14px;min-height:80px;padding:12px 22px;border:0;border-radius:15px;background:{{ home.saleBg }};color:{{ home.saleInk }};cursor:pointer;text-align:left;transition:background 220ms,color 220ms"><span style="width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;background:{{ home.saleIcBg }};color:{{ home.saleIcInk }};font-size:26px;font-weight:700;line-height:1">−</span><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:21px;font-weight:700;letter-spacing:-.01em">Sale</span><span style="font-size:13px;opacity:.85">Stock goes down</span></span></button>
+            <button role="tab" onClick="{{ setIn }}" style="display:flex;align-items:center;gap:14px;min-height:80px;padding:12px 22px;border:0;border-radius:15px;background:{{ home.inBg }};color:{{ home.inInk }};cursor:pointer;text-align:left;transition:background 220ms,color 220ms"><span style="width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;background:{{ home.inIcBg }};color:{{ home.inIcInk }};font-size:26px;font-weight:700;line-height:1">+</span><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:21px;font-weight:700;letter-spacing:-.01em">Stock in</span><span style="font-size:13px;opacity:.85">Stock goes up</span></span></button>
+          </div>
+        </div>
+      </header>
+      <div style="padding:{{ L.pad }};display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
+        <div style="flex:1 1 560px;min-width:0;display:flex;flex-direction:column;gap:24px">
+          <section style="background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)">
+            <sc-if value="{{ L.wide }}" hint-placeholder-val="{{ true }}">
+              <div style="display:grid;grid-template-columns:{{ L.lineCols }};gap:12px;padding:14px 20px 10px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600">
+                <div>Item</div><div>Size</div><div>Pairs</div><div>Left after</div><div></div>
+              </div>
+            </sc-if>
+            <sc-for list="{{ lines }}" as="ln" hint-placeholder-count="1">
+              <div style="display:grid;grid-template-columns:{{ L.lineCols }};gap:12px;padding:12px 20px;border-top:1px solid var(--line);align-items:start">
+                <div style="position:relative;grid-column:{{ ln.span }};min-width:0">
+                  <input ref="{{ ln.itemRef }}" value="{{ ln.q }}" onChange="{{ ln.onQ }}" onKeyDown="{{ ln.onKey }}" onFocus="{{ ln.onFocus }}" onBlur="{{ ln.onBlur }}" placeholder="Type an item: y329, capal black, 2146" aria-label="Item" autocomplete="off" style="width:100%;height:46px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-size:15px;font-weight:{{ ln.qWeight }};outline:none" style-focus="border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)">
+                  <sc-if value="{{ ln.hasItem }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:12px;color:var(--muted);padding:5px 2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ln.sub }}</div>
+                  </sc-if>
+                  <sc-if value="{{ ln.showSug }}" hint-placeholder-val="{{ false }}">
+                    <div role="listbox" style="position:absolute;top:50px;left:0;right:0;z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.16);padding:6px;max-height:340px;overflow:auto">
+                      <sc-for list="{{ ln.sug }}" as="sg" hint-placeholder-count="4">
+                        <button role="option" onMouseDown="{{ sg.pick }}" style="width:100%;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 12px;border:0;border-radius:8px;background:{{ sg.bg }};text-align:left;cursor:pointer" style-hover="background:var(--sunk)">
+                          <span style="min-width:0;display:flex;flex-direction:column">
+                            <b style="font-size:14px;display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:3px;background:{{ sg.cc }};flex:0 0 auto"></span>{{ sg.tag }}</b>
+                            <span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ sg.sub }}</span>
+                          </span>
+                          <span style="font-size:13px;font-weight:600;color:{{ sg.stockColor }};white-space:nowrap">{{ sg.stock }}</span>
+                        </button>
+                      </sc-for>
+                      <sc-if value="{{ ln.noSug }}" hint-placeholder-val="{{ false }}">
+                        <div style="padding:12px;font-size:13px;color:var(--muted)">No item matches “{{ ln.q }}”. <a onMouseDown="{{ goAddItem }}">Add a new item</a></div>
+                      </sc-if>
+                      <div style="padding:6px 12px 2px;font-size:11px;color:var(--muted)">↑ ↓ to move · Enter to pick</div>
+                    </div>
+                  </sc-if>
+                </div>
+                <select ref="{{ ln.sizeRef }}" value="{{ ln.size }}" onChange="{{ ln.onSize }}" disabled="{{ ln.noItem }}" aria-label="Size" style="width:100%;height:46px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-size:15px;outline:none;opacity:{{ ln.sizeOp }}" style-focus="border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)">
+                  <option value="">Size</option>
+                  <sc-for list="{{ ln.sizes }}" as="o"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
+                </select>
+                <input ref="{{ ln.pairsRef }}" type="number" min="1" value="{{ ln.pairs }}" onChange="{{ ln.onPairs }}" onKeyDown="{{ ln.onPairsKey }}" aria-label="Pairs" placeholder="0" style="width:100%;height:46px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-size:17px;font-weight:600;outline:none" style-focus="border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)">
+                <div style="min-height:46px;display:flex;flex-direction:column;justify-content:center">
+                  <div style="font-size:24px;font-weight:700;line-height:1;color:{{ ln.afterColor }}">{{ ln.afterTxt }}</div>
+                  <sc-if value="{{ ln.neg }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:12px;color:var(--neg);font-weight:600;padding-top:4px">Below zero. Check the shelf. You can still save.</div>
+                  </sc-if>
+                  <sc-if value="{{ ln.alarm }}" hint-placeholder-val="{{ false }}"><div style="margin-top:5px;align-self:flex-start;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--neg-soft);color:var(--neg)">{{ ln.alarmTxt }}</div></sc-if>
+                  <sc-if value="{{ ln.showNow }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:12px;color:var(--muted);padding-top:3px">{{ ln.nowTxt }}</div>
+                  </sc-if>
+                </div>
+                <button onClick="{{ ln.remove }}" aria-label="Remove line" title="Remove line" style="white-space:nowrap;flex-shrink:0;width:40px;height:46px;border:0;border-radius:10px;background:transparent;color:var(--muted);font-size:20px;cursor:pointer" style-hover="background:var(--sunk);color:var(--ink)">×</button>
+              </div>
+            </sc-for>
+            <div style="padding:6px 20px 16px">
+              <button onClick="{{ addLine }}" style="white-space:nowrap;flex-shrink:0;height:40px;padding:0 12px;border:1px dashed var(--acc-line);border-radius:10px;background:transparent;color:var(--acc-text);font-weight:600;cursor:pointer" style-hover="background:var(--acc-soft)">+ Add another item</button>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;padding:18px 20px;border-top:1px solid var(--line);background:var(--sunk);border-radius:0 0 16px 16px">
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted);font-weight:600">Date
+                <input type="date" value="{{ date }}" onChange="{{ onDate }}" style="height:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:14px;color:var(--ink);outline:none" style-focus="border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)">
+              </label>
+              <label style="flex:1 1 220px;display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted);font-weight:600">{{ home.noteLabel }}
+                <input value="{{ note }}" onChange="{{ onNote }}" placeholder="{{ home.notePh }}" style="height:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:14px;color:var(--ink);outline:none" style-focus="border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)">
+              </label>
+              <div style="display:flex;align-items:center;gap:18px;margin-left:auto">
+                <div style="text-align:right">
+                  <div style="font-size:12px;color:var(--muted);font-weight:600">Total</div>
+                  <div style="font-size:26px;font-weight:700;line-height:1.1">{{ home.total }}</div>
+                </div>
+                <button onClick="{{ save }}" style="white-space:nowrap;flex-shrink:0;height:56px;padding:0 28px;border:0;border-radius:12px;background:var(--acc);color:var(--acc-ink);font-size:17px;font-weight:700;cursor:pointer;box-shadow:0 6px 18px -8px var(--acc)" style-hover="filter:brightness(1.08)" style-active="transform:translateY(1px)">{{ home.saveLabel }}</button>
+              </div>
+            </div>
+          </section>
+          <div style="font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:16px">
+            <span><b style="color:var(--ink)">Enter</b> picks the item, then the size</span>
+            <span><b style="color:var(--ink)">Enter</b> in Pairs adds the next line</span>
+            <span><b style="color:var(--ink)">Ctrl + Enter</b> saves</span>
+          </div>
+
+          <section style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
+              <h2 style="margin:0;font-size:17px;font-weight:600">{{ home.listTitle }}</h2>
+              <span style="font-size:12px;color:var(--muted)">Latest first</span>
+            </div>
+            <sc-if value="{{ home.noEntries }}" hint-placeholder-val="{{ true }}">
+              <div style="padding:22px;border:1px dashed var(--line);border-radius:14px;color:var(--muted);font-size:13px">{{ home.emptyTxt }}</div>
+            </sc-if>
+            <sc-for list="{{ home.entries }}" as="en" hint-placeholder-count="0">
+              <div style="display:flex;gap:16px;align-items:flex-start;padding:14px 18px;background:var(--surface);border:1px solid var(--line);border-radius:14px">
+                <div style="width:8px;height:8px;border-radius:50%;background:var(--acc);margin-top:7px;flex:0 0 auto"></div>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+                  <sc-for list="{{ en.rows }}" as="r"><div style="font-size:14px"><b>{{ r.tag }}</b> <span style="color:var(--muted)">· size {{ r.sz }} ×</span> <b>{{ r.q }}</b></div></sc-for>
+                  <div style="font-size:12px;color:var(--muted)">{{ en.meta }}</div>
+                </div>
+                <div style="font-size:18px;font-weight:700;white-space:nowrap">{{ en.pairs }}</div>
+                <button onClick="{{ en.undo }}" style="white-space:nowrap;flex-shrink:0;height:34px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:transparent;cursor:pointer;font-size:13px;font-weight:600" style-hover="background:var(--sunk)">Undo</button>
+              </div>
+            </sc-for>
+          </section>
+        </div>
+
+        <sc-if value="{{ showInsights }}" hint-placeholder-val="{{ true }}">
+          <aside style="flex:1 1 280px;max-width:{{ L.sideMax }};display:flex;flex-direction:column;gap:16px">
+            <section style="padding:18px;background:var(--surface);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;gap:12px">
+              <div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600">Today</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div><div style="font-size:28px;font-weight:700;line-height:1">{{ today.sold }}</div><div style="font-size:12px;color:var(--muted);padding-top:4px">pairs sold</div></div>
+                <div><div style="font-size:28px;font-weight:700;line-height:1">{{ today.recv }}</div><div style="font-size:12px;color:var(--muted);padding-top:4px">pairs received</div></div>
+              </div>
+            </section>
+            <sc-if value="{{ heads.has }}" hint-placeholder-val="{{ false }}">
+              <section style="padding:18px;background:var(--warn-soft);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;gap:10px">
+                <div style="font-size:14px;font-weight:700">Heads-up for this {{ heads.what }}</div>
+                <sc-for list="{{ heads.list }}" as="h"><div style="font-size:13px;line-height:1.45;text-wrap:pretty"><b>{{ h.title }}</b> {{ h.txt }}</div></sc-for>
+              </section>
+            </sc-if>
+            <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}"><section style="padding:18px;background:var(--surface);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;gap:12px">
+              <div>
+                <div style="font-size:14px;font-weight:700">Running low: restock soon</div>
+                <div style="font-size:12px;color:var(--muted);text-wrap:pretty">Less than 4 weeks left at the last 3 months' pace.</div>
+              </div>
+              <sc-for list="{{ restockShort }}" as="r" hint-placeholder-count="4">
+                <div style="display:flex;gap:10px;align-items:center">
+                  <button onClick="{{ r.open }}" style="flex:1;min-width:0;text-align:left;border:0;background:transparent;padding:0;cursor:pointer">
+                    <div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.tag }}</div>
+                    <div style="font-size:12px;color:var(--muted)">{{ r.sub }}</div>
+                  </button>
+                  <button onClick="{{ r.toIn }}" title="Add to a stock in" style="white-space:nowrap;flex-shrink:0;height:32px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:transparent;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:var(--sunk)">+ Stock in</button>
+                </div>
+              </sc-for>
+              <a onClick="{{ goStock }}" style="font-size:13px">See all stock health →</a>
+            </section></sc-if>
+          </aside>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ============ STOCK ============ -->
+    <sc-if value="{{ P.stock }}" hint-placeholder-val="{{ false }}">
+      <header style="position:relative;background:{{ hb.bg }};color:{{ hb.ink }};border-bottom:1px solid var(--acc-line);padding:{{ L.headPad }}">
+        <div style="position:absolute;left:0;right:0;top:0;height:4px;background:var(--acc)"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:12px;letter-spacing:.07em;text-transform:uppercase;font-weight:600;opacity:.75">Look up</div>
+            <h1 style="margin:0;font-size:30px;line-height:1.1;letter-spacing:-.02em;font-weight:700">Stock</h1>
+            <p style="margin:0;font-size:14px;opacity:.8">Pairs left by size, grouped by category. Add, rename or remove items and categories right here.</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onClick="{{ newItemStock }}" style="white-space:nowrap;height:44px;padding:0 18px;border:0;border-radius:10px;background:var(--acc);color:var(--acc-ink);font-weight:700;font-size:15px;cursor:pointer" style-hover="filter:brightness(1.08)">+ Add item</button>
+            <button onClick="{{ toggleAddCat }}" style="white-space:nowrap;height:44px;padding:0 18px;border:1px solid var(--acc-line);border-radius:10px;background:var(--surface);color:var(--ink);font-weight:700;font-size:15px;cursor:pointer" style-hover="background:var(--sunk)">+ Add category</button>
+            <button onClick="{{ csvStock }}" style="white-space:nowrap;flex-shrink:0;height:44px;padding:0 16px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font-weight:600;cursor:pointer" style-hover="background:var(--sunk)">Download CSV</button>
+          </div>
+        </div>
+        <input ref="{{ searchRef }}" value="{{ q }}" onChange="{{ onQ }}" onKeyDown="{{ onQKey }}" placeholder="Search tag, code, colour, brand… (press / to jump here)" aria-label="Search stock" style="margin-top:18px;width:100%;height:56px;padding:0 18px;border:1px solid var(--acc-line);border-radius:14px;background:var(--surface);color:var(--ink);font-size:18px;outline:none" style-focus="border-color:var(--acc);box-shadow:0 0 0 4px var(--acc-soft)">
+      </header>
+      <div style="padding:{{ L.pad }};display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
+        <div style="flex:1 1 600px;min-width:0;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+            <select value="{{ cat }}" onChange="{{ onCat }}" aria-label="Category" style="height:40px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);outline:none" style-focus="border-color:var(--acc)">
+              <option value="all">All categories</option>
+              <sc-for list="{{ catOpts }}" as="c"><option value="{{ c.id }}">{{ c.name }}</option></sc-for>
+            </select>
+            <select value="{{ sort }}" onChange="{{ onSort }}" aria-label="Sort" style="height:40px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);outline:none" style-focus="border-color:var(--acc)">
+              <option value="name">Sort: item name</option>
+              <option value="stock">Sort: most stock</option>
+              <option value="best">Sort: best selling (30 days)</option>
+              <option value="cover">Sort: running out first</option>
+            </select>
+            <label style="display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer"><input type="checkbox" checked="{{ hide }}" onChange="{{ onHide }}" style="width:18px;height:18px;accent-color:var(--acc)">Hide items with no stock</label>
+            <span style="margin-left:auto;font-size:13px;color:var(--muted)">{{ stockCount }}</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:12px;color:var(--muted);align-items:center">
+            <span style="display:flex;gap:6px;align-items:center"><span style="width:26px;height:20px;border:1px solid var(--line);border-radius:4px;display:grid;place-items:center;color:var(--ink);font-weight:600">7</span>pairs left</span>
+            <span style="display:flex;gap:6px;align-items:center"><span style="width:26px;height:20px;border-radius:4px;display:grid;place-items:center;background:var(--warn-soft);color:var(--warn);font-weight:700">1</span>last pair</span>
+            <span style="display:flex;gap:6px;align-items:center"><span style="width:26px;height:20px;border:1px solid var(--line);border-radius:4px;display:grid;place-items:center">–</span>none left</span>
+            <span style="display:flex;gap:6px;align-items:center"><span style="width:26px;height:20px;border-radius:4px;display:grid;place-items:center;background:var(--neg-soft);color:var(--neg);font-weight:700">-2</span>below zero, needs checking</span>
+            <span style="display:flex;gap:6px;align-items:center"><span style="width:26px;height:20px;border-radius:4px;background:repeating-linear-gradient(135deg,var(--line) 0 1px,transparent 1px 5px)"></span>size not stocked</span>
+            <span style="display:flex;gap:6px;align-items:center"><span style="width:4px;height:20px;border-radius:2px;background:var(--muted)"></span>left edge = category colour</span>
+          </div>
+          <sc-if value="{{ addCatOpen }}" hint-placeholder-val="{{ false }}">
+            <section style="padding:18px;border:1px solid var(--acc-line);border-radius:16px;background:var(--surface);display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;animation:toastIn 180ms ease">
+              <label style="flex:1 1 240px;display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:var(--ink)">New category name
+                <input value="{{ newCat }}" onChange="{{ onNewCat }}" onKeyDown="{{ onNewCatKey }}" placeholder="e.g. Sandals" style="height:48px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);outline:none;font-size:16px;font-weight:400" style-focus="border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)">
+              </label>
+              <div style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;font-weight:700">Colour</span><div style="display:flex;gap:8px;align-items:center;height:48px"><sc-for list="{{ newCatCols }}" as="k"><button onClick="{{ k.pick }}" aria-label="Pick colour" style="width:30px;height:30px;border-radius:50%;border:0;padding:0;background:{{ k.c }};box-shadow:{{ k.ring }};cursor:pointer;transition:box-shadow 150ms"></button></sc-for></div></div>
+              <div style="display:flex;gap:8px">
+                <button onClick="{{ toggleAddCat }}" style="height:48px;padding:0 16px;border:1px solid var(--line);border-radius:10px;background:transparent;font-weight:600;cursor:pointer" style-hover="background:var(--sunk)">Cancel</button>
+                <button onClick="{{ addCat }}" style="height:48px;padding:0 20px;border:0;border-radius:10px;background:var(--acc);color:var(--acc-ink);font-size:15px;font-weight:700;cursor:pointer" style-hover="filter:brightness(1.08)">Add category</button>
+              </div>
+              <div style="flex-basis:100%;font-size:12px;color:var(--muted)">New categories start with the low-stock alarm off.</div>
+            </section>
+          </sc-if>
+          <sc-if value="{{ stockEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:40px 24px;border:1px dashed var(--line);border-radius:16px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center">
+              <div style="font-size:17px;font-weight:600">No item matches “{{ q }}”</div>
+              <div style="font-size:14px;color:var(--muted)">Check the spelling, try the model number only, or <a onClick="{{ goAddItem }}">add a new item</a>.</div>
+            </div>
+          </sc-if>
+          <sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
+            <section style="background:var(--surface);border:1px solid var(--line);border-top:5px solid {{ g.cc }};border-radius:16px;overflow:hidden">
+              <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;padding:14px 18px;background:{{ g.cs }};border-bottom:1px solid var(--line)">
+                <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1 1 260px">
+                  <button onClick="{{ g.cycle }}" title="Change colour" aria-label="Change category colour" style="width:32px;height:32px;border:0;border-radius:50%;background:transparent;display:grid;place-items:center;cursor:pointer;padding:0;flex:0 0 auto"><span style="width:18px;height:18px;border-radius:50%;background:{{ g.cc }};box-shadow:0 0 0 3px var(--surface)"></span></button>
+                  <sc-if value="{{ g.editing }}"><input value="{{ g.editVal }}" onChange="{{ g.onEdit }}" onKeyDown="{{ g.onEditKey }}" onBlur="{{ g.commit }}" aria-label="Category name" style="flex:1;min-width:0;height:42px;padding:0 10px;border:1px solid var(--acc);border-radius:10px;background:var(--bg);font-size:18px;font-weight:700;outline:none;box-shadow:0 0 0 3px var(--acc-soft)"></sc-if>
+                  <sc-if value="{{ g.notEditing }}"><div style="min-width:0"><h2 style="margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em">{{ g.label }}</h2><div style="font-size:13px;color:var(--muted)">{{ g.meta }}</div></div></sc-if>
+                </div>
+                <div style="display:flex;gap:2px;align-items:center;flex-wrap:wrap">
+                  <button onClick="{{ g.addItem }}" style="height:38px;padding:0 14px;margin-right:6px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap" style-hover="border-color:var(--acc)">+ Add item here</button>
+                  <button onClick="{{ g.up }}" title="Move category up" aria-label="Move category up" style="width:34px;height:38px;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;flex:0 0 auto" style-hover="background:var(--surface);color:var(--ink)">↑</button>
+                  <button onClick="{{ g.down }}" title="Move category down" aria-label="Move category down" style="width:34px;height:38px;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;flex:0 0 auto" style-hover="background:var(--surface);color:var(--ink)">↓</button>
+                  <button onClick="{{ g.rename }}" title="Rename category" aria-label="Rename category" style="width:34px;height:38px;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;flex:0 0 auto" style-hover="background:var(--surface);color:var(--ink)">✎</button>
+                  <button onClick="{{ g.del }}" title="Delete category" aria-label="Delete category" style="width:34px;height:38px;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;flex:0 0 auto;font-size:19px" style-hover="background:var(--neg-soft);color:var(--neg)">×</button>
+                </div>
+              </div>
+              <sc-if value="{{ g.empty }}"><div style="padding:18px;font-size:14px;color:var(--muted)">No items in this category yet. Use “+ Add item here”.</div></sc-if>
+              <sc-for list="{{ g.tables }}" as="t">
+                <sc-if value="{{ t.showLabel }}"><div style="padding:12px 18px 2px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">{{ t.label }}</div></sc-if>
+                <div style="overflow-x:auto">
+                <table style="border-collapse:separate;border-spacing:0;width:100%;font-size:14px">
+                  <thead>
+                    <tr>
+                      <th style="position:sticky;left:0;z-index:1;background:var(--sunk);text-align:left;padding:8px 14px;font-size:12px;color:var(--muted);font-weight:600;min-width:210px;border-bottom:1px solid var(--line)">Item</th>
+                      <sc-for list="{{ t.sizes }}" as="z"><th style="background:var(--sunk);padding:8px 0;min-width:40px;font-size:12px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line)">{{ z }}</th></sc-for>
+                      <th style="background:var(--sunk);padding:8px 10px;font-size:12px;color:var(--ink);font-weight:700;border-bottom:1px solid var(--line);border-left:1px solid var(--line)">Total</th>
+                      <th style="background:var(--sunk);padding:8px 10px;font-size:12px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap">Sold 30d</th>
+                      <th style="background:var(--sunk);border-bottom:1px solid var(--line);padding:8px 14px"></th>
+                      
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <sc-for list="{{ t.rows }}" as="r">
+                      <tr onClick="{{ r.open }}" style="cursor:pointer;background:{{ r.bg }}" style-hover="background:var(--sunk)">
+                        <td style="position:sticky;left:0;background:{{ r.stickyBg }};padding:8px 14px;border-bottom:1px solid var(--line);box-shadow:{{ r.mark }}">
+                          <div style="font-weight:600;white-space:nowrap">{{ r.tag }}</div>
+                          <div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px">{{ r.sub }}</div>
+                        </td>
+                        <sc-for list="{{ r.cells }}" as="c"><td title="{{ c.title }}" style="text-align:center;padding:0;border-bottom:1px solid var(--line);background:{{ c.bg }};color:{{ c.color }};font-weight:{{ c.fw }}">{{ c.txt }}</td></sc-for>
+                        <td style="text-align:center;padding:0 10px;border-bottom:1px solid var(--line);border-left:1px solid var(--line);font-weight:700;font-size:15px;color:{{ r.totalColor }}">{{ r.total }}</td>
+                        <td style="text-align:center;padding:0 10px;border-bottom:1px solid var(--line);color:var(--muted)">{{ r.s30 }}</td>
+                        <td style="padding:0 12px;border-bottom:1px solid var(--line);text-align:right"><button onClick="{{ r.remove }}" title="Remove this item from the system" style="height:32px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:var(--neg-soft);color:var(--neg);border-color:var(--neg)">Remove</button></td>
+                        
+                      </tr>
+                    </sc-for>
+                  </tbody>
+                </table>
+              </div>
+              </sc-for>
+            </section>
+          </sc-for>
+          <sc-if value="{{ removed.has }}" hint-placeholder-val="{{ false }}">
+            <section style="padding:16px 18px;border:1px dashed var(--line);border-radius:16px;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2 style="margin:0;font-size:16px">Removed items</h2><span style="font-size:12px;color:var(--muted)">Hidden from stock and the sale form. Past sales stay in reports.</span></div>
+              <sc-for list="{{ removed.list }}" as="r"><div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)"><span style="width:10px;height:10px;border-radius:3px;background:{{ r.cc }}"></span><span style="flex:1;min-width:0;font-weight:600;color:var(--muted)">{{ r.tag }} <span style="font-weight:400">· {{ r.cat }}</span></span><button onClick="{{ r.restore }}" style="height:32px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:transparent;font-size:12px;font-weight:700;cursor:pointer" style-hover="background:var(--sunk)">Restore</button></div></sc-for>
+            </section>
+          </sc-if>
+        </div>
+        <sc-if value="{{ showInsights }}" hint-placeholder-val="{{ true }}">
+          <aside style="flex:1 1 280px;max-width:{{ L.sideMax }};display:flex;flex-direction:column;gap:16px;position:{{ L.sideSticky }};top:16px">
+            <section style="padding:18px;background:var(--surface);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;gap:14px">
+              <div>
+                <div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600">Stock health</div>
+                <div style="font-size:13px;color:var(--muted);padding-top:4px;text-wrap:pretty">How your stock compares with what is selling. Click an item to open its card.</div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+                <div style="padding:10px;border-radius:10px;background:var(--warn-soft)"><div style="font-size:22px;font-weight:700;color:var(--warn)">{{ health.restockN }}</div><div style="font-size:11px">running low</div></div>
+                <div style="padding:10px;border-radius:10px;background:var(--sunk)"><div style="font-size:22px;font-weight:700">{{ health.gapN }}</div><div style="font-size:11px">selling sizes out</div></div>
+                <div style="padding:10px;border-radius:10px;background:var(--acc-soft)"><div style="font-size:22px;font-weight:700;color:var(--acc-text)">{{ health.slowPairs }}</div><div style="font-size:11px">pairs not moving</div></div>
+              </div>
+            </section>
+            <section style="padding:18px;background:var(--surface);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:14px;font-weight:700">Running low</div>
+              <sc-for list="{{ health.restock }}" as="r"><button onClick="{{ r.open }}" style="display:flex;justify-content:space-between;gap:10px;text-align:left;border:0;background:transparent;padding:4px 0;cursor:pointer" style-hover="color:var(--acc-text)"><span style="min-width:0"><b style="font-size:13px">{{ r.tag }}</b><br><span style="font-size:12px;color:var(--muted)">{{ r.sub }}</span></span><span style="font-size:13px;font-weight:700;color:var(--warn);white-space:nowrap">{{ r.cover }}</span></button></sc-for>
+            </section>
+            <section style="padding:18px;background:var(--surface);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:14px;font-weight:700">Sizes that sell, but none left</div>
+              <sc-for list="{{ health.gaps }}" as="r"><button onClick="{{ r.open }}" style="text-align:left;border:0;background:transparent;padding:4px 0;cursor:pointer" style-hover="color:var(--acc-text)"><b style="font-size:13px">{{ r.tag }}</b><br><span style="font-size:12px;color:var(--muted)">{{ r.sub }}</span></button></sc-for>
+            </section>
+            <section style="padding:18px;background:var(--surface);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;gap:10px">
+              <div style="font-size:14px;font-weight:700">Not moving</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:-6px">Lots of stock, few or no sales in 3 months.</div>
+              <sc-for list="{{ health.slow }}" as="r"><button onClick="{{ r.open }}" style="text-align:left;border:0;background:transparent;padding:4px 0;cursor:pointer" style-hover="color:var(--acc-text)"><b style="font-size:13px">{{ r.tag }}</b><br><span style="font-size:12px;color:var(--muted)">{{ r.sub }}</span></button></sc-for>
+            </section>
+          </aside>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ============ SALES ============ -->
+    <sc-if value="{{ P.sales }}" hint-placeholder-val="{{ false }}">
+      <header style="position:relative;background:{{ hb.bg }};color:{{ hb.ink }};border-bottom:1px solid var(--acc-line);padding:{{ L.headPad }}">
+        <div style="position:absolute;left:0;right:0;top:0;height:4px;background:var(--acc)"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:12px;letter-spacing:.07em;text-transform:uppercase;font-weight:600;opacity:.75">Results</div>
+            <h1 style="margin:0;font-size:30px;line-height:1.1;letter-spacing:-.02em;font-weight:700">Sales</h1>
+            <p style="margin:0;font-size:14px;opacity:.8">What sold, and whether your stock keeps up with it.</p>
+          </div>
+          <div style="display:flex;gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px">
+            <sc-for list="{{ periods }}" as="p"><button onClick="{{ p.go }}" style="white-space:nowrap;flex-shrink:0;height:38px;padding:0 14px;border:0;border-radius:8px;background:{{ p.bg }};color:{{ p.ink }};font-weight:600;cursor:pointer;transition:background 200ms">{{ p.label }}</button></sc-for>
+          </div>
+        </div>
+      </header>
+      <div style="padding:{{ L.pad }};display:flex;flex-direction:column;gap:24px">
+        <section style="padding:20px;border-radius:18px;background:var(--acc-soft);border:1px solid var(--acc-line);display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-end">
+            <div style="min-width:0;flex:1 1 320px"><div style="font-size:12px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;color:var(--acc-text)">Pinned · always watched</div><h2 style="margin:4px 0 0;font-size:22px;letter-spacing:-.01em">Shoes you are keeping an eye on</h2><div style="font-size:13px;color:var(--muted);text-wrap:pretty;padding-top:2px">Pin any shoe from the chart, the Best sellers table or its item card. Pinned shoes stay at the top of this page and in the sidebar on every page.</div></div>
+            <sc-if value="{{ pins.canAdd }}" hint-placeholder-val="{{ true }}"><select value="" onChange="{{ pins.onAdd }}" aria-label="Pin a shoe" style="height:44px;padding:0 12px;border:1px solid var(--acc-line);border-radius:10px;background:var(--surface);color:var(--acc-text);font-weight:700;font-size:14px;outline:none;max-width:240px"><option value="">+ Pin a shoe</option><sc-for list="{{ pins.addOpts }}" as="o"><option value="{{ o.id }}">{{ o.label }}</option></sc-for></select></sc-if>
+          </div>
+          <sc-if value="{{ pins.empty }}" hint-placeholder-val="{{ false }}"><div style="padding:24px;border:1px dashed var(--acc-line);border-radius:14px;text-align:center;font-size:14px;color:var(--muted);background:var(--surface)">Nothing pinned yet. Pin a shoe to watch it here every day.</div></sc-if>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
+            <sc-for list="{{ pins.cards }}" as="p" hint-placeholder-count="2">
+              <article style="background:var(--surface);border:1px solid var(--line);border-top:5px solid {{ p.cc }};border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0">
+                <div style="display:flex;gap:10px;align-items:flex-start;justify-content:space-between">
+                  <div style="min-width:0"><div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--muted)"><span style="width:8px;height:8px;border-radius:50%;background:{{ p.cc }}"></span>{{ p.cat }}</div><button onClick="{{ p.open }}" style="display:block;border:0;background:transparent;padding:0;margin-top:2px;font-size:18px;font-weight:700;color:var(--ink);cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%" style-hover="color:var(--acc-text)">{{ p.tag }}</button></div>
+                  <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}"><button onClick="{{ p.unpin }}" title="Unpin" style="height:30px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex:0 0 auto" style-hover="background:var(--sunk);color:var(--ink)">Unpin</button></sc-if>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                  <div><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em">Sold this week</div><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:30px;font-weight:700;line-height:1.1">{{ p.wk }}</span><span style="font-size:12px;font-weight:700;color:{{ p.dColor }}">{{ p.dTxt }}</span></div></div>
+                  <div><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em">On the shelf</div><div style="font-size:30px;font-weight:700;line-height:1.1;color:{{ p.stockColor }}">{{ p.stock }}</div></div>
+                </div>
+                <div>
+                  <div style="display:flex;align-items:flex-end;gap:4px;height:56px"><sc-for list="{{ p.spark }}" as="b"><span title="{{ b.title }}" style="flex:1;height:{{ b.h }};min-height:2px;border-radius:3px 3px 0 0;background:{{ p.cc }};opacity:{{ b.op }}"></span></sc-for></div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);padding-top:4px"><span>8 weeks ago</span><span>This week</span></div>
+                </div>
+                <div style="font-size:13px;font-weight:600;color:{{ p.noteColor }};text-wrap:pretty">{{ p.note }}</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button onClick="{{ p.chart }}" style="height:34px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:transparent;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:var(--sunk)">Show in chart</button>
+                  <sc-if value="{{ p.hasLow }}"><button onClick="{{ p.toIn }}" style="height:34px;padding:0 12px;border:0;border-radius:8px;background:var(--c-in);color:{{ pins.btnInk }};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">+ Stock in low sizes</button></sc-if>
+                </div>
+              </article>
+            </sc-for>
+          </div>
+        </section>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px">
+          <sc-for list="{{ tiles }}" as="t" hint-placeholder-count="3">
+            <div style="padding:20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;gap:6px;min-width:0">
+              <div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600">{{ t.label }}</div>
+              <div style="font-size:34px;font-weight:700;line-height:1.05;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.value }}</div>
+              <div style="font-size:13px;color:var(--muted)">{{ t.sub }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ salesEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:40px;border:1px dashed var(--line);border-radius:16px;text-align:center;color:var(--muted)">No sales in this period. Try a longer period.</div>
+        </sc-if>
+        <section style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-end">
+            <div style="min-width:0">
+              <div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600">One shoe · last 12 months</div>
+              <h2 style="margin:4px 0 0;font-size:21px;letter-spacing:-.01em">{{ tr.tag }}</h2>
+              <div style="font-size:13px;color:var(--muted)">{{ tr.sub }}</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap"><sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}"><button onClick="{{ tr.pin }}" style="height:42px;padding:0 16px;border:1px solid {{ tr.pinBorder }};border-radius:10px;background:{{ tr.pinBg }};color:{{ tr.pinInk }};font-weight:700;cursor:pointer;white-space:nowrap;transition:background 200ms">{{ tr.pinTxt }}</button></sc-if><label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--muted)">Choose a shoe
+              <select value="{{ tr.id }}" onChange="{{ tr.onPick }}" style="height:42px;min-width:240px;max-width:100%;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);outline:none" style-focus="border-color:var(--acc)"><sc-for list="{{ tr.opts }}" as="o"><option value="{{ o.id }}">{{ o.label }}</option></sc-for></select>
+            </label></div>
+          </div>
+          <div style="padding:12px 14px;border-radius:12px;background:var(--acc-soft);font-size:14px;line-height:1.5;text-wrap:pretty">{{ tr.insight }}</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
+            <sc-for list="{{ tr.stats }}" as="t" hint-placeholder-count="5"><div style="padding:12px 14px;border-radius:12px;background:var(--sunk);min-width:0"><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em">{{ t.l }}</div><div style="font-size:24px;font-weight:700;line-height:1.15;color:{{ t.c }}">{{ t.v }}</div><div style="font-size:12px;color:var(--muted)">{{ t.s }}</div></div></sc-for>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start">
+            <div style="flex:2 1 420px;min-width:0;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><div style="font-size:14px;font-weight:700">Pairs sold per month</div><div style="display:flex;gap:6px;align-items:center;font-size:11px;color:var(--muted)"><span style="width:16px;border-top:2px dashed var(--muted)"></span>monthly average · {{ tr.avgTxt }}</div></div>
+              <div style="position:relative;height:180px;display:flex;align-items:flex-end;gap:6px;border-bottom:1px solid var(--line)">
+                <div style="position:absolute;left:0;right:0;bottom:{{ tr.avgB }};border-top:2px dashed var(--muted);opacity:.6;pointer-events:none"></div>
+                <sc-for list="{{ tr.bars }}" as="b" hint-placeholder-count="12"><div title="{{ b.title }}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;min-width:0"><span style="font-size:11px;color:var(--muted);font-weight:600">{{ b.v }}</span><span style="width:100%;max-width:34px;height:{{ b.h }};min-height:2px;border-radius:5px 5px 0 0;background:var(--acc);opacity:{{ b.op }};transition:height 300ms"></span></div></sc-for>
+              </div>
+              <div style="display:flex;gap:6px"><sc-for list="{{ tr.bars }}" as="b"><span style="flex:1;text-align:center;font-size:11px;color:var(--muted);min-width:0">{{ b.m }}</span></sc-for></div>
+              <div style="font-size:11px;color:var(--muted)">{{ tr.partial }}</div>
+            </div>
+            <div style="flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:10px">
+              <div><div style="font-size:14px;font-weight:700">Each size: sold vs on the shelf</div><div style="font-size:12px;color:var(--muted)">Sold in the last 3 months, against pairs in stock now.</div></div>
+              <div style="display:flex;gap:14px;font-size:11px;color:var(--muted)"><span style="display:flex;gap:6px;align-items:center"><span style="width:12px;height:7px;border-radius:2px;background:var(--acc)"></span>Sold, 3 months</span><span style="display:flex;gap:6px;align-items:center"><span style="width:12px;height:7px;border-radius:2px;background:var(--muted);opacity:.45"></span>In stock</span></div>
+              <sc-for list="{{ tr.sizes }}" as="z"><div title="{{ z.title }}" style="display:grid;grid-template-columns:30px minmax(0,1fr) 48px;gap:8px;align-items:center"><span style="font-size:12px;font-weight:700">{{ z.s }}</span><span style="display:flex;flex-direction:column;gap:3px"><span style="height:7px;border-radius:4px;background:var(--acc);width:{{ z.soldW }}"></span><span style="height:7px;border-radius:4px;background:var(--muted);opacity:.45;width:{{ z.stockW }}"></span></span><span style="font-size:11px;text-align:right;line-height:1.25"><b>{{ z.sold }}</b> sold<br><span style="color:{{ z.stockColor }};font-weight:600">{{ z.stock }}</span></span></div></sc-for>
+            </div>
+          </div>
+        </section>
+        <section style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px">
+          <div>
+            <div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600">Compare shoes · last 12 months</div>
+            <h2 style="margin:4px 0 0;font-size:21px;letter-spacing:-.01em">Several shoes, month by month</h2>
+            <div style="font-size:13px;color:var(--muted);text-wrap:pretty">Pick up to 5 shoes. The lines show pairs sold each month; the table gives the same numbers with stock alongside.</div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+            <sc-for list="{{ cmp.chips }}" as="c" hint-placeholder-count="4"><span style="display:flex;align-items:center;gap:8px;height:36px;padding:0 6px 0 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:13px;font-weight:600;white-space:nowrap"><span style="width:14px;height:4px;border-radius:2px;background:{{ c.color }}"></span>{{ c.tag }}<button onClick="{{ c.remove }}" aria-label="Remove from comparison" style="width:24px;height:24px;border:0;border-radius:50%;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;padding:0" style-hover="background:var(--sunk);color:var(--ink)">×</button></span></sc-for>
+            <sc-if value="{{ cmp.canAdd }}" hint-placeholder-val="{{ true }}"><select value="" onChange="{{ cmp.onAdd }}" aria-label="Add a shoe" style="height:36px;padding:0 10px;border:1px dashed var(--acc-line);border-radius:999px;background:transparent;color:var(--acc-text);font-weight:600;outline:none;max-width:220px"><option value="">+ Add a shoe</option><sc-for list="{{ cmp.addOpts }}" as="o"><option value="{{ o.id }}">{{ o.label }}</option></sc-for></select></sc-if>
+            <button onClick="{{ cmp.top5 }}" style="margin-left:auto;height:36px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:transparent;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:var(--sunk)">Show top 5 sellers</button>
+          </div>
+          <sc-if value="{{ cmp.empty }}" hint-placeholder-val="{{ false }}"><div style="padding:32px;border:1px dashed var(--line);border-radius:14px;text-align:center;color:var(--muted);font-size:14px">Add a shoe above to start comparing.</div></sc-if>
+          <sc-if value="{{ cmp.has }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:12px 14px;border-radius:12px;background:var(--acc-soft);font-size:14px;line-height:1.5;text-wrap:pretty">{{ cmp.insight }}</div>
+            <div style="position:relative;padding:4px 8px 0 36px">
+              <sc-for list="{{ cmp.yTicks }}" as="y"><span style="position:absolute;left:0;top:{{ y.top }};transform:translateY(-50%);font-size:11px;color:var(--muted);width:28px;text-align:right">{{ y.v }}</span></sc-for>
+              {{ cmp.svg }}
+              <div style="display:flex;justify-content:space-between;padding-top:6px"><sc-for list="{{ months }}" as="m"><span style="width:0;display:flex;justify-content:center;font-size:11px;color:var(--muted)">{{ m }}</span></sc-for></div>
+            </div>
+            <div style="overflow-x:auto">
+              <table style="width:100%;border-collapse:separate;border-spacing:3px;font-size:13px;min-width:760px">
+                <thead><tr><th style="text-align:left;font-size:11px;color:var(--muted);font-weight:600;padding:4px 8px">Shoe</th><sc-for list="{{ months }}" as="m"><th style="font-size:11px;color:var(--muted);font-weight:600;padding:4px 0">{{ m }}</th></sc-for><th style="text-align:right;font-size:11px;color:var(--muted);font-weight:600;padding:4px 8px">12 mo</th><th style="text-align:right;font-size:11px;color:var(--muted);font-weight:600;padding:4px 8px">Trend</th></tr></thead>
+                <tbody><sc-for list="{{ cmp.rows }}" as="r"><tr>
+                  <td style="padding:6px 8px;white-space:nowrap"><button onClick="{{ r.open }}" style="display:flex;gap:8px;align-items:center;font-weight:600;border:0;background:transparent;padding:0;cursor:pointer;color:var(--ink)" style-hover="color:var(--acc-text)"><span style="width:10px;height:10px;border-radius:3px;background:{{ r.color }}"></span>{{ r.tag }}</button></td>
+                  <sc-for list="{{ r.cells }}" as="c"><td title="{{ c.title }}" style="text-align:center;padding:8px 0;border-radius:6px;background:{{ c.bg }};color:{{ c.ink }};font-weight:600;min-width:34px">{{ c.v }}</td></sc-for>
+                  <td style="text-align:right;padding:6px 8px;font-weight:700">{{ r.total }}</td>
+                  <td style="text-align:right;padding:6px 8px;font-weight:700;color:{{ r.trendColor }}">{{ r.trend }}</td>
+                </tr></sc-for></tbody>
+              </table>
+            </div>
+            <div style="font-size:11px;color:var(--muted)">Darker cell = more pairs sold that month. Trend compares the last 3 full months with the 3 before.</div>
+          </sc-if>
+        </section>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+          <section style="padding:18px;background:var(--surface);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;gap:10px">
+            <div><div style="font-size:15px;font-weight:700">Selling well, stock running out</div><div style="font-size:12px;color:var(--muted)">Restock these first. Under 4 weeks left.</div></div>
+            <sc-if value="{{ restockNone }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--muted);padding:8px 0;border-top:1px solid var(--line)">Nothing urgent. Every item sold in this period has at least 4 weeks of stock.</div></sc-if>
+            <sc-for list="{{ restockSales }}" as="r"><button onClick="{{ r.open }}" style="display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;align-items:center;text-align:left;border:0;border-top:1px solid var(--line);background:transparent;padding:8px 0;cursor:pointer" style-hover="color:var(--acc-text)"><b style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.tag }}</b><span style="font-size:12px;color:var(--muted);white-space:nowrap">{{ r.sold }}</span><span style="font-size:13px;font-weight:700;color:var(--warn);white-space:nowrap">{{ r.cover }}</span></button></sc-for>
+          </section>
+          <section style="padding:18px;background:var(--surface);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;gap:10px">
+            <div><div style="font-size:15px;font-weight:700">Lots of stock, slow sales</div><div style="font-size:12px;color:var(--muted)">{{ slowNote }}</div></div>
+            <sc-for list="{{ health.slow }}" as="r"><button onClick="{{ r.open }}" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;text-align:left;border:0;border-top:1px solid var(--line);background:transparent;padding:8px 0;cursor:pointer" style-hover="color:var(--acc-text)"><b style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.tag }}</b><span style="font-size:12px;color:var(--muted);white-space:nowrap">{{ r.sub }}</span></button></sc-for>
+          </section>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">
+          <section style="flex:1 1 560px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;padding:14px 18px;border-bottom:1px solid var(--line);gap:12px;flex-wrap:wrap">
+              <h2 style="margin:0;font-size:16px;font-weight:700">Best sellers · {{ periodLabel }}</h2>
+              <button onClick="{{ csvSales }}" style="white-space:nowrap;flex-shrink:0;height:34px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:transparent;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:var(--sunk)">Download all sales &amp; deliveries (CSV)</button>
+            </div>
+            <div style="overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse;font-size:14px">
+                <thead><tr style="background:var(--sunk);font-size:12px;color:var(--muted)">
+                  <th style="text-align:left;padding:8px 18px;font-weight:600;width:36px">#</th>
+                  <th style="text-align:left;padding:8px;font-weight:600">Item</th>
+                  <th style="text-align:left;padding:8px;font-weight:600;min-width:160px">Pairs sold</th>
+                  <th style="text-align:right;padding:8px;font-weight:600">Last sale</th>
+                  <th style="text-align:right;padding:8px 18px;font-weight:600">Watch</th>
+                </tr></thead>
+                <tbody>
+                  <sc-for list="{{ ranked }}" as="r" hint-placeholder-count="10">
+                    <tr onClick="{{ r.open }}" style="border-top:1px solid var(--line);cursor:pointer;background:{{ r.bg }}" style-hover="background:var(--sunk)">
+                      <td style="padding:10px 18px;color:var(--muted)">{{ r.rank }}</td>
+                      <td style="padding:10px 8px"><div style="font-weight:600">{{ r.tag }}</div><div style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:{{ r.cc }}"></span>{{ r.cat }}</div></td>
+                      <td style="padding:10px 8px"><div style="display:flex;align-items:center;gap:10px"><span style="font-weight:700;min-width:28px">{{ r.n }}</span><span style="flex:1;height:8px;border-radius:4px;background:var(--sunk);min-width:60px"><span style="display:block;height:8px;border-radius:4px;width:{{ r.w }};background:var(--acc)"></span></span></div></td>
+                      <td style="padding:10px 8px;text-align:right;color:var(--muted);white-space:nowrap">{{ r.last }}</td>
+                      <td style="padding:6px 18px 6px 8px;text-align:right"><sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}"><button onClick="{{ r.pin }}" title="{{ r.pinTitle }}" style="height:32px;padding:0 12px;border:1px solid {{ r.pinBorder }};border-radius:999px;background:{{ r.pinBg }};color:{{ r.pinInk }};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">{{ r.pinTxt }}</button></sc-if></td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <aside style="flex:1 1 300px;max-width:{{ L.sideMax }};padding:18px;background:var(--surface);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;gap:16px;position:{{ L.sideSticky }};top:16px">
+            <div>
+              <div style="font-size:15px;font-weight:700">Sales by category</div>
+              <div style="font-size:12px;color:var(--muted);text-wrap:pretty">Share of pairs sold, against share of the stock on your shelves.</div>
+            </div>
+            <div style="display:flex;gap:14px;font-size:11px;color:var(--muted)">
+              <span style="display:flex;gap:6px;align-items:center"><span style="width:12px;height:8px;border-radius:2px;background:var(--acc)"></span>Sold</span>
+              <span style="display:flex;gap:6px;align-items:center"><span style="width:12px;height:8px;border-radius:2px;background:var(--muted);opacity:.45"></span>In stock</span>
+            </div>
+            <sc-for list="{{ catSales }}" as="c" hint-placeholder-count="5">
+              <div style="display:flex;flex-direction:column;gap:5px">
+                <div style="display:flex;justify-content:space-between;font-size:13px"><b>{{ c.name }}</b><span>{{ c.sold }} pairs</span></div>
+                <div style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:8px;border-radius:4px;background:var(--sunk)"><span style="display:block;height:8px;border-radius:4px;width:{{ c.soldW }};background:var(--acc)"></span></span><span style="font-size:11px;color:var(--muted);width:32px;text-align:right">{{ c.soldPct }}</span></div>
+                <div style="display:flex;align-items:center;gap:8px"><span style="flex:1;height:8px;border-radius:4px;background:var(--sunk)"><span style="display:block;height:8px;border-radius:4px;width:{{ c.stockW }};background:var(--muted);opacity:.45"></span></span><span style="font-size:11px;color:var(--muted);width:32px;text-align:right">{{ c.stockPct }}</span></div>
+                <div style="font-size:12px;color:{{ c.verdictColor }};font-weight:600">{{ c.verdict }}</div>
+              </div>
+            </sc-for>
+          </aside>
+        </div>
+      </div>
+    </sc-if>
+
+  </main>
+
+  <!-- ============ DRAWER ============ -->
+  <div onClick="{{ closeDrawer }}" style="position:fixed;inset:0;background:rgba(12,14,18,.34);opacity:{{ dw.backOp }};pointer-events:{{ dw.backPe }};transition:opacity 220ms ease;z-index:40"></div>
+  <aside role="dialog" aria-label="Item card" style="position:fixed;top:0;right:0;height:100vh;width:{{ dw.w }};max-width:100vw;background:var(--surface);border-left:1px solid var(--line);box-shadow:{{ dw.shadow }};transform:{{ dw.tf }};transition:{{ dw.trans }};z-index:41;display:flex;flex-direction:column">
+    <sc-if value="{{ dw.isItem }}" hint-placeholder-val="{{ false }}">
+      <div style="position:relative;padding:22px 24px 18px;background:var(--acc-soft);border-bottom:1px solid var(--acc-line)">
+        <div style="position:absolute;left:0;right:0;top:0;height:4px;background:var(--acc)"></div>
+        <div style="display:flex;gap:12px;align-items:flex-start;justify-content:space-between">
+          <div style="min-width:0;display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:12px;color:var(--muted);font-weight:600"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:{{ dr.cc }}"></span><span style="font-family:'IBM Plex Mono',monospace">{{ dr.code }}</span> · {{ dr.cat }}</span></div>
+            <h2 style="margin:0;font-size:26px;line-height:1.1;letter-spacing:-.02em">{{ dr.tag }}</h2>
+            <div style="font-size:14px;color:var(--muted)">{{ dr.sub }}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex:0 0 auto">
+            <button onClick="{{ dr.pin }}" style="height:36px;padding:0 12px;border:1px solid {{ dr.pinBorder }};border-radius:8px;background:{{ dr.pinBg }};color:{{ dr.pinInk }};font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">{{ dr.pinTxt }}</button>
+            <button onClick="{{ dr.edit }}" style="white-space:nowrap;flex-shrink:0;height:36px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-weight:600;font-size:13px;cursor:pointer" style-hover="border-color:var(--acc)">Edit item</button>
+            <button onClick="{{ closeDrawer }}" aria-label="Close" style="white-space:nowrap;flex-shrink:0;width:36px;height:36px;border:0;border-radius:8px;background:transparent;font-size:22px;cursor:pointer" style-hover="background:var(--surface)">×</button>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1;overflow:auto;padding:22px 24px 40px;display:flex;flex-direction:column;gap:22px">
+        <div style="padding:14px 16px;border-radius:12px;background:{{ dr.insightBg }};font-size:14px;line-height:1.5;text-wrap:pretty">{{ dr.insight }}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:8px">
+          <sc-for list="{{ dr.tiles }}" as="t" hint-placeholder-count="9">
+            <div title="{{ t.title }}" style="padding:8px 6px 7px;border-radius:10px;border:1px solid {{ t.border }};background:{{ t.bg }};text-align:center;display:flex;flex-direction:column;gap:2px">
+              <div style="font-size:11px;color:var(--muted);font-weight:600">Size {{ t.s }}</div>
+              <div style="font-size:26px;font-weight:700;line-height:1.05;color:{{ t.color }}">{{ t.v }}</div>
+              <div style="font-size:10px;color:var(--muted)">{{ t.sold }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid {{ dr.al.border }};border-radius:12px;background:{{ dr.al.bg }};transition:background 200ms">
+          <div style="flex:1 1 200px;min-width:0"><div style="font-size:14px;font-weight:700">Low-stock alarm</div><div style="font-size:12px;color:var(--muted);text-wrap:pretty">{{ dr.al.src }}</div></div>
+          <select value="{{ dr.al.th }}" onChange="{{ dr.al.onTh }}" disabled="{{ dr.al.off }}" aria-label="Alarm level" style="height:36px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);outline:none;opacity:{{ dr.al.op }}"><sc-for list="{{ thOpts }}" as="o"><option value="{{ o.v }}">{{ o.label }}</option></sc-for></select><button onClick="{{ dr.al.toggle }}" role="switch" aria-checked="{{ dr.al.on }}" aria-label="Low-stock alarm" style="flex:0 0 auto;width:46px;height:28px;border:0;border-radius:14px;background:{{ dr.al.trackBg }};position:relative;cursor:pointer;transition:background 200ms;padding:0"><span style="position:absolute;top:3px;left:{{ dr.al.knobL }};width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left 200ms"></span></button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+          <sc-for list="{{ dr.totals }}" as="t" hint-placeholder-count="4"><div style="min-width:0"><div style="font-size:11px;color:var(--muted);font-weight:600">{{ t.l }}</div><div style="font-size:17px;font-weight:700;white-space:nowrap">{{ t.v }}</div></div></sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button onClick="{{ dr.doSale }}" style="white-space:nowrap;flex:1 1 160px;height:48px;border:0;border-radius:10px;background:var(--c-sale);color:{{ dr.btnInk }};font-weight:700;font-size:15px;cursor:pointer;box-shadow:{{ dr.saleRing }}" style-hover="filter:brightness(1.08)">Record a sale</button>
+            <button onClick="{{ dr.doIn }}" style="white-space:nowrap;flex:1 1 160px;height:48px;border:0;border-radius:10px;background:var(--c-in);color:{{ dr.btnInk }};font-weight:700;font-size:15px;cursor:pointer;box-shadow:{{ dr.inRing }}" style-hover="filter:brightness(1.08)">Record stock in</button>
+          </div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px">
+            <a onClick="{{ dr.doRet }}">Customer return</a>
+            <a onClick="{{ dr.doCount }}">Stock count / correction</a>
+            <a onClick="{{ dr.doEx }}">Size exchange</a>
+          </div>
+        </div>
+        <sc-if value="{{ dr.hasAct }}" hint-placeholder-val="{{ false }}">
+          <section style="border:1px solid var(--acc-line);border-radius:14px;overflow:hidden">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--sunk)">
+              <div><div style="font-weight:700;font-size:15px">{{ dr.actTitle }}</div><div style="font-size:12px;color:var(--muted)">{{ dr.actHelp }}</div></div>
+              <button onClick="{{ dr.cancel }}" style="white-space:nowrap;flex-shrink:0;height:32px;padding:0 10px;border:0;border-radius:8px;background:transparent;font-size:13px;cursor:pointer;color:var(--muted)" style-hover="background:var(--surface)">Cancel</button>
+            </div>
+            <sc-if value="{{ dr.isGrid }}">
+              <div style="overflow-x:auto;padding:12px 16px">
+                <table style="border-collapse:collapse;font-size:14px">
+                  <tr><td style="font-size:12px;color:var(--muted);font-weight:600;padding:4px 10px 4px 0;white-space:nowrap">Size</td><sc-for list="{{ dr.grid }}" as="g"><td style="text-align:center;font-size:12px;color:var(--muted);font-weight:600;padding:4px 2px">{{ g.s }}</td></sc-for></tr>
+                  <tr><td style="font-size:12px;color:var(--muted);padding:4px 10px 4px 0;white-space:nowrap">In stock now</td><sc-for list="{{ dr.grid }}" as="g"><td style="text-align:center;padding:4px 2px;color:var(--muted)">{{ g.now }}</td></sc-for></tr>
+                  <tr><td style="font-size:12px;font-weight:700;padding:4px 10px 4px 0;white-space:nowrap">{{ dr.inLabel }}</td><sc-for list="{{ dr.grid }}" as="g"><td style="padding:3px 2px"><input type="number" value="{{ g.val }}" onChange="{{ g.on }}" aria-label="{{ g.aria }}" style="width:46px;height:40px;text-align:center;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-weight:700;font-size:15px;outline:none;padding:0" style-focus="border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)"></td></sc-for></tr>
+                  <tr><td style="font-size:12px;color:var(--muted);padding:4px 10px 4px 0;white-space:nowrap">After saving</td><sc-for list="{{ dr.grid }}" as="g"><td style="text-align:center;padding:4px 2px;font-weight:700;color:{{ g.afterColor }}">{{ g.after }}</td></sc-for></tr>
+                </table>
+              </div>
+            </sc-if>
+            <sc-if value="{{ dr.isEx }}">
+              <div style="display:flex;gap:12px;flex-wrap:wrap;padding:14px 16px;align-items:flex-end">
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--muted)">Size brought back
+                  <select value="{{ dr.exFrom }}" onChange="{{ dr.onExFrom }}" style="height:42px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);outline:none"><option value="">Pick size</option><sc-for list="{{ dr.exOpts }}" as="o"><option value="{{ o.v }}">{{ o.label }}</option></sc-for></select>
+                </label>
+                <span style="padding-bottom:10px;color:var(--muted)">→</span>
+                <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--muted)">Size taken instead
+                  <select value="{{ dr.exTo }}" onChange="{{ dr.onExTo }}" style="height:42px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);outline:none"><option value="">Pick size</option><sc-for list="{{ dr.exOpts }}" as="o"><option value="{{ o.v }}">{{ o.label }}</option></sc-for></select>
+                </label>
+              </div>
+            </sc-if>
+            <div style="display:flex;gap:10px;align-items:center;padding:12px 16px;border-top:1px solid var(--line);flex-wrap:wrap">
+              <input value="{{ dr.note }}" onChange="{{ dr.onNote }}" placeholder="{{ dr.notePh }}" style="flex:1 1 180px;height:42px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);outline:none" style-focus="border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)">
+              <button onClick="{{ dr.saveAct }}" style="white-space:nowrap;flex-shrink:0;height:42px;padding:0 18px;border:0;border-radius:8px;background:var(--acc);color:var(--acc-ink);font-weight:700;cursor:pointer" style-hover="filter:brightness(1.08)">{{ dr.saveLabel }}</button>
+            </div>
+          </section>
+        </sc-if>
+        <section style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><h3 style="margin:0;font-size:15px">Pairs sold per month</h3><span style="font-size:12px;color:var(--muted)">Last 12 months</span></div>
+          <div style="display:flex;align-items:flex-end;gap:6px;height:130px;padding-top:16px">
+            <sc-for list="{{ dr.chart }}" as="b" hint-placeholder-count="12">
+              <div title="{{ b.title }}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%">
+                <span style="font-size:10px;color:var(--muted)">{{ b.v }}</span>
+                <span style="width:100%;max-width:26px;height:{{ b.h }};min-height:2px;border-radius:4px 4px 0 0;background:var(--acc);opacity:{{ b.op }}"></span>
+                <span style="font-size:10px;color:var(--muted)">{{ b.m }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+        <section style="display:flex;flex-direction:column;gap:2px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px"><h3 style="margin:0;font-size:15px">History</h3><span style="font-size:12px;color:var(--muted)">{{ dr.histNote }}</span></div>
+          <sc-for list="{{ dr.hist }}" as="h" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:86px minmax(0,1fr) auto;gap:12px;padding:10px 0;border-top:1px solid var(--line);align-items:start;background:{{ h.bg }}">
+              <div style="font-size:12px;color:var(--muted);padding-top:2px">{{ h.date }}</div>
+              <div style="min-width:0;display:flex;flex-direction:column;gap:2px">
+                <div style="font-size:14px;font-weight:600">{{ h.label }}</div>
+                <div style="font-size:12px;color:var(--muted)">{{ h.sizes }}</div>
+                <sc-if value="{{ h.hasNote }}"><div style="font-size:12px;color:var(--muted)">{{ h.note }}</div></sc-if>
+                <sc-if value="{{ h.flag }}"><div style="font-size:12px;color:var(--warn);font-weight:600">{{ h.flagTxt }}</div></sc-if>
+                <sc-if value="{{ h.mine }}"><div style="display:flex;gap:10px;align-items:center;font-size:12px"><span style="color:var(--acc-text);font-weight:600">Added here by Hafiz</span><a onClick="{{ h.undo }}">Undo</a></div></sc-if>
+              </div>
+              <div style="font-size:15px;font-weight:700;color:{{ h.qColor }}">{{ h.q }}</div>
+            </div>
+          </sc-for>
+        </section>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ dw.isEdit }}" hint-placeholder-val="{{ false }}">
+      <div style="position:relative;padding:22px 24px 18px;background:var(--acc-soft);border-bottom:1px solid var(--acc-line);display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="position:absolute;left:0;right:0;top:0;height:4px;background:var(--acc)"></div>
+        <div><div style="font-size:12px;color:var(--muted);font-weight:600">{{ ed.eyebrow }}</div><h2 style="margin:4px 0 0;font-size:24px;letter-spacing:-.02em">{{ ed.title }}</h2></div>
+        <button onClick="{{ closeDrawer }}" aria-label="Close" style="white-space:nowrap;flex-shrink:0;width:36px;height:36px;border:0;border-radius:8px;background:transparent;font-size:22px;cursor:pointer" style-hover="background:var(--surface)">×</button>
+      </div>
+      <div style="flex:1;overflow:auto;padding:22px 24px;display:flex;flex-direction:column;gap:16px">
+        <sc-if value="{{ ed.hasErr }}"><div role="alert" style="padding:12px 14px;border-radius:10px;background:var(--neg-soft);color:var(--neg);font-size:13px;font-weight:600">{{ ed.err }}</div></sc-if>
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--muted)">Name / model
+          <input value="{{ ed.tag }}" onChange="{{ ed.onTag }}" placeholder="e.g. Line 7 2146" style="height:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font-size:15px;outline:none" style-focus="border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)">
+        </label>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--muted)">Category
+            <select value="{{ ed.cat }}" onChange="{{ ed.onCat }}" style="height:44px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);outline:none"><sc-for list="{{ catOpts }}" as="c"><option value="{{ c.id }}">{{ c.name }}</option></sc-for></select>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--muted)">Colour
+            <input value="{{ ed.colour }}" onChange="{{ ed.onColour }}" placeholder="Black" style="height:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);outline:none" style-focus="border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)">
+          </label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--muted)">Brand
+            <input value="{{ ed.brand }}" onChange="{{ ed.onBrand }}" placeholder="Line 7" style="height:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);outline:none" style-focus="border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)">
+          </label>
+        </div>
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--muted)">Details
+          <input value="{{ ed.details }}" onChange="{{ ed.onDetails }}" placeholder="Court shoes, RM89.90, supplier JLG" style="height:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);outline:none" style-focus="border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)">
+        </label>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:12px;font-weight:600;color:var(--muted)">Sizes</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <sc-for list="{{ ed.presets }}" as="p"><button onClick="{{ p.go }}" style="white-space:nowrap;flex-shrink:0;height:34px;padding:0 12px;border:1px solid {{ p.border }};border-radius:999px;background:{{ p.bg }};color:{{ p.ink }};font-size:13px;font-weight:600;cursor:pointer">{{ p.label }}</button></sc-for>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <select value="{{ ed.sys }}" onChange="{{ ed.onSys }}" aria-label="Size system" style="height:40px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);outline:none"><option value="UK">UK</option><option value="EU">EU</option><option value="CAP">Capal</option></select>
+            <select value="{{ ed.from }}" onChange="{{ ed.onFrom }}" aria-label="From size" style="height:40px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);outline:none"><sc-for list="{{ ed.sizeOpts }}" as="o"><option value="{{ o }}">{{ o }}</option></sc-for></select>
+            <span style="color:var(--muted)">to</span>
+            <select value="{{ ed.to }}" onChange="{{ ed.onTo }}" aria-label="To size" style="height:40px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);outline:none"><sc-for list="{{ ed.sizeOpts }}" as="o"><option value="{{ o }}">{{ o }}</option></sc-for></select>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:12px">
+          <div style="flex:1 1 200px;min-width:0"><div style="font-size:14px;font-weight:700;color:var(--ink)">Low-stock alarm</div><div style="font-size:12px;color:var(--muted);text-wrap:pretty">{{ ed.alSrc }}</div></div>
+          <select value="{{ ed.alTh }}" onChange="{{ ed.onAlTh }}" disabled="{{ ed.alOff }}" aria-label="Alarm level" style="height:36px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);outline:none;opacity:{{ ed.alOp }}"><sc-for list="{{ thOpts }}" as="o"><option value="{{ o.v }}">{{ o.label }}</option></sc-for></select><button onClick="{{ ed.al.toggle }}" role="switch" aria-checked="{{ ed.al.on }}" aria-label="Low-stock alarm" style="flex:0 0 auto;width:46px;height:28px;border:0;border-radius:14px;background:{{ ed.al.trackBg }};position:relative;cursor:pointer;transition:background 200ms;padding:0"><span style="position:absolute;top:3px;left:{{ ed.al.knobL }};width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left 200ms"></span></button>
+        </div>
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--muted)">Note for staff
+          <textarea value="{{ ed.note }}" onChange="{{ ed.onNote }}" rows="3" placeholder="e.g. Size 12 is on the top shelf in the store room" style="padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);outline:none;resize:vertical" style-focus="border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)"></textarea>
+        </label>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;padding:16px 24px;border-top:1px solid var(--line)">
+        <sc-if value="{{ ed.canRemove }}"><button onClick="{{ ed.remove }}" style="white-space:nowrap;flex-shrink:0;height:44px;padding:0 14px;border:0;border-radius:10px;background:transparent;color:var(--neg);font-weight:600;cursor:pointer" style-hover="background:var(--neg-soft)">Remove item</button></sc-if>
+        <button onClick="{{ closeDrawer }}" style="white-space:nowrap;margin-left:auto;height:44px;padding:0 16px;border:1px solid var(--line);border-radius:10px;background:transparent;font-weight:600;cursor:pointer" style-hover="background:var(--sunk)">Cancel</button>
+        <button onClick="{{ ed.save }}" style="white-space:nowrap;flex-shrink:0;height:44px;padding:0 20px;border:0;border-radius:10px;background:var(--acc);color:var(--acc-ink);font-weight:700;cursor:pointer" style-hover="filter:brightness(1.08)">{{ ed.saveLabel }}</button>
+      </div>
+    </sc-if>
+  <sc-if value="{{ dw.isAlarms }}" hint-placeholder-val="{{ false }}">
+      <div style="position:relative;padding:22px 24px 18px;background:var(--neg-soft);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div style="position:absolute;left:0;right:0;top:0;height:4px;background:var(--neg)"></div>
+        <div style="min-width:0"><div style="font-size:12px;color:var(--muted);font-weight:600">Pop-up warnings</div><h2 style="margin:4px 0 0;font-size:24px;letter-spacing:-.02em">Low-stock alarms</h2><div style="font-size:13px;color:var(--muted);padding-top:6px;text-wrap:pretty">Alarms are off unless you turn them on, including for new shoes and new categories. With an alarm on, you get a pop-up as soon as a sale takes any size down to the level you choose.</div></div>
+        <button onClick="{{ closeDrawer }}" aria-label="Close" style="width:36px;height:36px;border:0;border-radius:8px;background:transparent;font-size:22px;cursor:pointer;flex:0 0 auto" style-hover="background:var(--surface)">×</button>
+      </div>
+      <div style="flex:1;overflow:auto;padding:22px 24px 40px;display:flex;flex-direction:column;gap:26px">
+        <section style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><h3 style="margin:0;font-size:15px">Ringing now</h3><span style="font-size:12px;color:var(--muted)">{{ al.hitsMeta }}</span></div>
+          <sc-if value="{{ al.noHits }}"><div style="padding:14px;border:1px dashed var(--line);border-radius:12px;font-size:13px;color:var(--muted)">{{ al.noHitsTxt }}</div></sc-if>
+          <sc-for list="{{ al.hits }}" as="h"><div style="display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--neg-soft)"><button onClick="{{ h.open }}" style="flex:1;min-width:0;text-align:left;border:0;background:transparent;padding:0;cursor:pointer;color:var(--ink)"><div style="font-weight:700;font-size:14px">{{ h.tag }}</div><div style="font-size:12px;color:var(--neg);font-weight:600">{{ h.sizes }}</div></button><button onClick="{{ h.toIn }}" style="height:34px;padding:0 12px;border:0;border-radius:8px;background:var(--c-in);color:{{ al.btnInk }};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">+ Stock in</button></div></sc-for>
+        </section>
+        <section style="padding:18px;border:2px solid var(--neg);border-radius:16px;display:flex;flex-direction:column;gap:12px;background:var(--surface)">
+          <div><h3 style="margin:0;font-size:18px">Add a shoe alarm</h3><div style="font-size:13px;color:var(--muted);text-wrap:pretty;padding-top:2px">Pick a shoe and the number that feels low to you. You know your shelf best.</div></div>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--muted)">Shoe
+            <select value="{{ al.addId }}" onChange="{{ al.onAddId }}" style="height:48px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font-size:15px;outline:none" style-focus="border-color:var(--neg)"><option value="">Choose a shoe…</option><sc-for list="{{ al.addOpts }}" as="o"><option value="{{ o.id }}">{{ o.label }}</option></sc-for></select>
+          </label>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:15px">
+            <span>Warn me when any size has</span>
+            <input type="number" min="0" value="{{ al.addTh }}" onChange="{{ al.onAddTh }}" aria-label="Alarm level" style="width:80px;height:48px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font-size:18px;font-weight:700;text-align:center;outline:none" style-focus="border-color:var(--neg)">
+            <span>pairs or fewer</span>
+          </div>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--muted)">Why (optional)
+            <input value="{{ al.addWhy }}" onChange="{{ al.onAddWhy }}" placeholder="e.g. Sells fast before school opens" style="height:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font-size:14px;outline:none" style-focus="border-color:var(--neg)">
+          </label>
+          <button onClick="{{ al.add }}" style="height:50px;border:0;border-radius:12px;background:{{ al.addBg }};color:#fff;font-size:16px;font-weight:700;cursor:pointer" style-hover="filter:brightness(1.08)">Set alarm</button>
+        </section>
+        <section style="display:flex;flex-direction:column">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding-bottom:6px"><h3 style="margin:0;font-size:15px">Your shoe alarms</h3><span style="font-size:12px;color:var(--muted)">{{ al.itemsMeta }}</span></div>
+          <sc-if value="{{ al.itemsEmpty }}"><div style="padding:14px;border:1px dashed var(--line);border-radius:12px;font-size:13px;color:var(--muted)">No shoe alarms yet. Add one above.</div></sc-if>
+          <sc-for list="{{ al.items }}" as="c"><div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)"><span style="width:10px;height:10px;border-radius:3px;background:{{ c.cc }};flex:0 0 auto"></span><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.tag }}</div><div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.src }}</div></div><select value="{{ c.th }}" onChange="{{ c.onTh }}" disabled="{{ c.off }}" aria-label="Alarm level" style="height:36px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);outline:none;opacity:{{ c.op }}"><sc-for list="{{ thOpts }}" as="o"><option value="{{ o.v }}">{{ o.label }}</option></sc-for></select><button onClick="{{ c.toggle }}" role="switch" aria-checked="{{ c.on }}" aria-label="Alarm on or off" style="flex:0 0 auto;width:46px;height:28px;border:0;border-radius:14px;background:{{ c.trackBg }};position:relative;cursor:pointer;transition:background 200ms;padding:0"><span style="position:absolute;top:3px;left:{{ c.knobL }};width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left 200ms"></span></button><button onClick="{{ c.remove }}" title="Remove alarm" aria-label="Remove alarm" style="width:30px;height:30px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:17px;cursor:pointer;flex:0 0 auto" style-hover="background:var(--neg-soft);color:var(--neg)">×</button></div></sc-for>
+        </section>
+        <section style="display:flex;flex-direction:column">
+          <h3 style="margin:0 0 4px;font-size:15px">By category <span style="font-weight:500;color:var(--muted)">(for now)</span></h3>
+          <div style="font-size:12px;color:var(--muted);padding-bottom:8px">Covers every shoe in the category, unless a shoe has its own setting.</div>
+          <sc-for list="{{ al.cats }}" as="c"><div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)"><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px">{{ c.name }}</div><div style="font-size:12px;color:var(--muted)">{{ c.meta }}</div></div><select value="{{ c.th }}" onChange="{{ c.onTh }}" disabled="{{ c.off }}" aria-label="Alarm level" style="height:36px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);outline:none;opacity:{{ c.op }}"><sc-for list="{{ thOpts }}" as="o"><option value="{{ o.v }}">{{ o.label }}</option></sc-for></select><button onClick="{{ c.toggle }}" role="switch" aria-checked="{{ c.on }}" aria-label="Low-stock alarm" style="flex:0 0 auto;width:46px;height:28px;border:0;border-radius:14px;background:{{ c.trackBg }};position:relative;cursor:pointer;transition:background 200ms;padding:0"><span style="position:absolute;top:3px;left:{{ c.knobL }};width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left 200ms"></span></button></div></sc-for>
+        </section>
+        
+      </div>
+    </sc-if>
+  </aside>
+
+  <!-- ============ MODAL ============ -->
+  <sc-if value="{{ md.open }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ md.cancel }}" style="position:fixed;inset:0;background:rgba(12,14,18,.45);z-index:60;display:grid;place-items:center;padding:20px">
+      <div role="alertdialog" onClick="{{ stop }}" style="width:min(440px,100%);background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.3);padding:22px;display:flex;flex-direction:column;gap:14px;animation:toastIn 180ms ease">
+        <h2 style="margin:0;font-size:19px">{{ md.title }}</h2>
+        <p style="margin:0;font-size:14px;color:var(--muted);text-wrap:pretty">{{ md.body }}</p>
+        <sc-if value="{{ md.showMove }}">
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--muted)">Move its items to
+            <select value="{{ md.moveVal }}" onChange="{{ md.onMove }}" style="height:44px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);outline:none"><sc-for list="{{ md.moveOpts }}" as="c"><option value="{{ c.id }}">{{ c.name }}</option></sc-for></select>
+          </label>
+        </sc-if>
+        <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:4px">
+          <button onClick="{{ md.cancel }}" style="white-space:nowrap;flex-shrink:0;height:42px;padding:0 16px;border:1px solid var(--line);border-radius:10px;background:transparent;font-weight:600;cursor:pointer" style-hover="background:var(--sunk)">Keep it</button>
+          <button onClick="{{ md.confirm }}" style="white-space:nowrap;flex-shrink:0;height:42px;padding:0 16px;border:0;border-radius:10px;background:var(--neg);color:#fff;font-weight:700;cursor:pointer" style-hover="filter:brightness(1.08)">{{ md.confirmLabel }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ am.open }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ am.close }}" style="position:fixed;inset:0;background:rgba(12,14,18,.5);z-index:65;display:grid;place-items:center;padding:20px">
+      <div role="alertdialog" aria-label="Low-stock alarm" onClick="{{ stop }}" style="width:min(480px,100%);background:var(--surface);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.35);overflow:hidden;animation:toastIn 200ms ease">
+        <div style="padding:20px 22px;background:{{ am.headBg }};color:#fff;display:flex;gap:14px;align-items:center">
+          <span style="width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.2);display:grid;place-items:center;font-size:26px;font-weight:700;flex:0 0 auto">!</span>
+          <div style="min-width:0"><div style="font-size:12px;letter-spacing:.07em;text-transform:uppercase;font-weight:700">Low-stock alarm</div><h2 style="margin:2px 0 0;font-size:20px;line-height:1.2">{{ am.title }}</h2></div>
+        </div>
+        <div style="padding:16px 22px 8px;display:flex;flex-direction:column;max-height:50vh;overflow:auto">
+          <p style="margin:0 0 10px;font-size:14px;color:var(--muted);text-wrap:pretty">{{ am.body }}</p>
+          <sc-for list="{{ am.list }}" as="a"><div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);align-items:center"><div style="min-width:0"><div style="font-weight:700;font-size:14px">{{ a.tag }}</div><div style="font-size:12px;color:var(--muted)">Size {{ a.z }} · alarm at {{ a.thTxt }}</div></div><div style="font-size:19px;font-weight:700;color:{{ a.color }};white-space:nowrap">{{ a.vTxt }}</div></div></sc-for>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;padding:14px 22px;border-top:1px solid var(--line);flex-wrap:wrap">
+          <button onClick="{{ am.close }}" style="height:44px;padding:0 16px;border:1px solid var(--line);border-radius:10px;background:transparent;font-weight:600;cursor:pointer" style-hover="background:var(--sunk)">OK, got it</button>
+          <button onClick="{{ am.restock }}" style="height:44px;padding:0 18px;border:0;border-radius:10px;background:var(--ink);color:var(--bg);font-weight:700;cursor:pointer" style-hover="opacity:.9">Add these to Stock in</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ TOASTS ============ -->
+  <div aria-live="polite" style="position:fixed;bottom:20px;right:20px;left:{{ L.toastLeft }};z-index:70;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none">
+    <sc-for list="{{ toasts }}" as="t" hint-placeholder-count="0">
+      <div style="pointer-events:auto;display:flex;gap:12px;align-items:center;max-width:440px;padding:12px 14px 12px 16px;border-radius:12px;background:var(--ink);color:var(--bg);box-shadow:0 14px 40px rgba(0,0,0,.25);animation:toastIn 200ms ease;font-size:14px">
+        <span style="width:10px;height:10px;border-radius:50%;background:{{ t.dot }};flex:0 0 auto"></span>
+        <span style="flex:1;text-wrap:pretty">{{ t.msg }}</span>
+        <sc-if value="{{ t.hasUndo }}"><button onClick="{{ t.undo }}" style="white-space:nowrap;flex-shrink:0;height:30px;padding:0 10px;border:1px solid currentColor;border-radius:8px;background:transparent;color:inherit;font-weight:700;font-size:13px;cursor:pointer">Undo</button></sc-if>
+        <button onClick="{{ t.close }}" aria-label="Dismiss" style="white-space:nowrap;flex-shrink:0;width:26px;height:26px;border:0;background:transparent;color:inherit;opacity:.6;cursor:pointer;font-size:16px">×</button>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light'|'dark'&quot;},&quot;headerStyle&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;tinted&quot;,&quot;bold&quot;],&quot;default&quot;:&quot;tinted&quot;,&quot;tsType&quot;:&quot;'tinted'|'bold'&quot;},&quot;showInsights&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;readOnly&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const TODAY=new Date(2026,9,7),DAY=864e5,MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const rg=(a,b)=>{const r=[];for(let i=a;i<=b;i++)r.push(i);return r};
+const SYS={UK:{label:'UK sizes',short:'UK',sizes:rg(4,12)},EU:{label:'EU sizes',short:'EU',sizes:rg(33,48)},CAP:{label:'Capal sizes',short:'Capal',sizes:rg(1,13)}};
+const H={sale:[150,.15],in:[255,.15],stock:[195,.11],items:[290,.15],sales:[68,.13],alarms:[355,.16]};
+const PRESETS=[['UK 4–10','UK',4,10],['UK 4–12','UK',4,12],['EU 39–45','EU',39,45],['EU 33–45','EU',33,45],['Capal 1–10','CAP',1,10]];
+const CATS0=[{id:'sch',name:'School shoes',hue:250},{id:'cap',name:'Capal',hue:45},{id:'off',name:'Office shoes',hue:300},{id:'spt',name:'Sports & court shoes',hue:150},{id:'unc',name:'Uncategorised',hue:null}];
+const HUES=[250,45,300,150,200,15,95,330];
+const sw=(on,fn)=>({on,toggle:fn,trackBg:on?'var(--neg)':'var(--line)',knobL:on?'21px':'3px'});
+const THO=[0,1,2,3,4,5,6,7,8,9,10,12,15,20].map(n=>({v:String(n),label:n===0?'At 0 (sold out)':'At '+n+' or less'}));
+const LBL={sold:'Sold',in:'Received',ret:'Customer return',count:'Stock count',ex:'Size exchange',open:'Opening stock'};
+const VARS=['bg','surface','sunk','ink','muted','line','acc','acc-ink','acc-soft','acc-text','acc-line','neg','neg-soft','warn','warn-soft'];
+const RAW=`Y329|White|School canvas, velcro|Bata|sch|UK|4|12|6
+A1010 / A7008|White|School canvas, laces|Pallas|sch|UK|4|12|5
+Line 7 2146|Black|Court shoes, RM89.90, supplier JLG|Line 7|spt|EU|39|45|2.5
+Capal Almond Black|Black|Almond toe, RM45|Capal|cap|CAP|1|13|3
+Newman 8115|Black|Office lace-up, leather|Newman|off|EU|39|45|1.5
+Y330|Black|School canvas, velcro|Bata|sch|UK|4|12|4
+Pallas 2288|White|School, padded collar|Pallas|sch|UK|4|10|3
+Capal Almond Brown|Brown|Almond toe, RM45|Capal|cap|CAP|1|13|2
+Capal Round Black|Black|Round toe, RM39|Capal|cap|CAP|1|10|2.2
+Newman 8120|Brown|Office loafer|Newman|off|EU|39|45|1
+Line 7 2150|White/Navy|Court shoes, RM89.90, supplier JLG|Line 7|spt|EU|39|45|1.8
+Warrior 1033|White|Canvas sneaker|Warrior|spt|EU|33|45|3
+Warrior 1035|Black|Canvas sneaker|Warrior|spt|EU|33|45|2.4
+Bata B-First 22|White|School, rubber toe cap|Bata|sch|UK|4|12|3.5
+Bata B-First 23|Black|School, rubber toe cap|Bata|sch|UK|4|12|2.5
+Kampung Hijau|Green|Rubber kampung shoe, RM12|Getah|unc|EU|36|45|1.2
+Fila Court 4400|White|Badminton shoe|Fila|spt|EU|39|45|1
+Yonex SHB 37|White/Red|Badminton shoe, RM159|Yonex|spt|EU|36|45|0.8
+Newman 8131|Black|Office slip-on|Newman|off|EU|39|45|1.2
+Capal Saudi Black|Black|Saudi style, RM55|Capal|cap|CAP|4|13|1.5
+Capal Saudi Tan|Tan|Saudi style, RM55|Capal|cap|CAP|4|13|0.9
+Vern's Pump 610|Black|Ladies pump, 2 in heel|Vern's|off|EU|35|41|1.1
+Vern's Pump 612|Nude|Ladies pump, 2 in heel|Vern's|off|EU|35|41|0.7
+Pallas 2290|Black|School, padded collar|Pallas|sch|UK|4|10|2
+Y329 Junior|White|School canvas, kids velcro|Bata|sch|UK|4|8|2.8
+Line 7 2160|Grey|Running shoe|Line 7|spt|EU|39|45|0.9
+Newman 8140|Black|Office oxford, wide fit|Newman|off|EU|40|46|0.6
+Capal Kids Black|Black|Kids capal, velcro|Capal|cap|CAP|1|8|1.3
+Capal Kids Brown|Brown|Kids capal, velcro|Capal|cap|CAP|1|8|0.8
+Warrior 1040|Navy|Canvas sneaker|Warrior|spt|EU|33|45|1.2
+Bata Bubblegummers 410|Pink|Kids school, velcro|Bata|sch|EU|33|38|1.4
+Bata Bubblegummers 411|Navy|Kids school, velcro|Bata|sch|EU|33|38|1.2
+Kampung Putih|White|Rubber kampung shoe, RM12|Getah|unc|EU|36|45|0.8
+Slipper Jepun 99|Blue|Rubber slipper|Getah|unc|EU|36|46|2
+Slipper Jepun 98|Black|Rubber slipper|Getah|unc|EU|36|46|1.6
+Fila Court 4410|White/Navy|Badminton shoe|Fila|spt|EU|39|45|0.5
+Newman 8150|Tan|Office loafer, suede|Newman|off|EU|39|45|0.4
+Vern's Flat 220|Black|Ladies office flat|Vern's|off|EU|35|41|1.3
+Vern's Flat 221|Maroon|Ladies office flat|Vern's|off|EU|35|41|0.6
+Capal Almond Kids|Black|Almond toe, kids|Capal|cap|CAP|1|6|0.7
+A1012|White|School canvas, laces, wide|Pallas|sch|UK|5|12|1.6
+A1014|Black|School canvas, laces|Pallas|sch|UK|4|12|1.4
+Line 7 2170|Black/Red|Futsal shoe|Line 7|spt|EU|36|45|0.9
+Warrior Futsal 77|Black|Futsal shoe, RM49|Warrior|spt|EU|36|45|1.1
+Newman 8115W|Black|Office lace-up, wide fit|Newman|off|EU|40|46|0.5
+Capal Tok Guru|Black|Wide strap, RM65|Capal|cap|CAP|5|13|0.6
+Kampung Biru|Blue|Rubber kampung shoe, RM12|Getah|unc|EU|36|45|0.3
+Pallas Scout 15|Brown|Scout boot|Pallas|sch|UK|4|12|0.5
+Y331|Navy|School canvas, velcro|Bata|sch|UK|4|12|0.9
+Sandal Getah 300|Black|Rubber sandal|Getah|unc|EU|36|46|0.8
+Bata Wedge 556|Black|Ladies wedge, office|Bata|off|EU|35|41|0.5`;
+const ago=d=>new Date(TODAY.getTime()-d*DAY);
+const fmt=(d,y)=>{const x=ago(d);return x.getDate()+' '+MON[x.getMonth()]+(y?' '+x.getFullYear():'')};
+const isoAgo=s=>{const p=String(s||'').split('-').map(Number);if(p.length<3||!p[0])return 0;return Math.max(0,Math.round((TODAY-new Date(p[0],p[1]-1,p[2]))/DAY))};
+const norm=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');
+const n0=n=>Number(n).toLocaleString('en-MY');
+const f1=n=>(Math.round(n*10)/10).toString();
+const mIdx=d=>{const x=ago(d);return 11-((TODAY.getFullYear()-x.getFullYear())*12+TODAY.getMonth()-x.getMonth())};
+function rng(s){return()=>{s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+function build(){
+  const R=rng(11),base={},hist={},agg={};
+  const items=RAW.trim().split('\n').map((l,i)=>{const f=l.split('|');return{id:'i'+i,tag:f[0],colour:f[1],details:f[2],brand:f[3],cat:f[4],sys:f[5],from:+f[6],to:+f[7],rate:+f[8],code:'K'+(1001+i),note:''}});
+  const openD=Math.round((TODAY-new Date(2020,8,1))/DAY);
+  items.forEach((it,ix)=>{
+    const sz=rg(it.from,it.to),mid=(it.from+it.to)/2,sp=(it.to-it.from)/3.2+.7;
+    const w=sz.map(s=>Math.exp(-((s-mid)**2)/(2*sp*sp))),ws=w.reduce((a,b)=>a+b,0);
+    const pick=()=>{let r=R()*ws;for(let k=0;k<sz.length;k++){r-=w[k];if(r<=0)return sz[k]}return sz[sz.length-1]};
+    const st={},tg=it.rate*4+R()*18+8;
+    sz.forEach((s,k)=>{st[s]=R()<.1?0:Math.max(0,Math.round(tg*w[k]/ws*(.55+R()*.9)))});
+    base[it.id]=st;
+    const ev=[{d:openD,t:'open',lines:sz.map(s=>({sz:s,q:Math.round(R()*6)+1})),note:'From the old stock card'}];
+    if(ix%7===2)ev.push({d:openD-40-ix,t:'sold',lines:[{sz:sz[1]||sz[0],q:-1}],note:'',flag:'Old sheet date read as 31/09/2021. Please check.'});
+    const a={s7:0,s30:0,s90:0,s365:0,sz30:{},sz90:{},mon:Array(12).fill(0),last:null};
+    for(let d=364;d>=0;d--){
+      const m=ago(d).getMonth(),se=it.cat==='sch'?(m===11||m===0?3.2:m===1?1.3:.55):1;
+      let n=0,p=it.rate/7*se;while(R()<p&&n<8){n++;p*=.5}
+      if(n){const c={};for(let k=0;k<n;k++){const s=pick();c[s]=(c[s]||0)+1}
+        const lines=Object.keys(c).map(s=>({sz:+s,q:-c[s]}));
+        ev.push({d,t:'sold',lines,note:R()<.35?'Receipt '+(4000+Math.floor(R()*5000)):''});
+        a.s365+=n;if(d<90)a.s90+=n;if(d<30)a.s30+=n;if(d<7)a.s7+=n;const mi=mIdx(d);if(mi>=0)a.mon[mi]+=n;a.last=d;
+        lines.forEach(l=>{if(d<30)a.sz30[l.sz]=(a.sz30[l.sz]||0)-l.q;if(d<90)a.sz90[l.sz]=(a.sz90[l.sz]||0)-l.q})}
+      if((d+ix*9)%63===0){const lines=sz.filter(()=>R()<.7).map(s=>({sz:s,q:Math.round(R()*4)+1}));if(lines.length)ev.push({d,t:'in',lines,note:'Invoice '+(it.brand==='Line 7'?'JLG-':'INV-')+(200+Math.floor(R()*800))})}
+    }
+    hist[it.id]=ev;agg[it.id]=a;
+  });
+  const NEG=[3,10,17,26,33,44];
+  NEG.forEach((ix,k)=>{const it=items[ix];base[it.id][Math.round((it.from+it.to)/2)]=-(k%2+1)});
+  let sum=0;items.forEach(it=>{for(const s in base[it.id])sum+=base[it.id][s]});
+  let diff=1613-sum,g=0;
+  while(diff!==0&&g<50000){g++;const it=items[Math.floor(R()*items.length)],s=it.from+Math.floor(R()*(it.to-it.from+1)),v=base[it.id][s];if(v<1)continue;if(diff>0){base[it.id][s]++;diff--}else if(v>1){base[it.id][s]--;diff++}}
+  const IT={imp:[['Sold more than received','Since Mar 2024, more pairs of size {s} were sold than delivered.','Look for a delivery invoice for size {s} that was never keyed in.'],['Opening stock missing','No opening stock was written for size {s}.','Check the first page of the old stock card for this size.']],
+    chk:[['Date looks mistyped','A sale is dated 31/09/2021. That date does not exist.','Check the receipt book and fix the date.'],['Sold a size not stocked','A sale of size {s} was keyed in, but this size is not normally stocked.','Probably the size next to it. Check the receipt.'],['Very big one-day sale','{q} pairs of size {s} sold in one day.','Confirm it was a school or bulk order.'],['Same line typed twice','Two identical lines on {dt}.','Remove one if it was typed twice.']],
+    min:[['Blank colour','The colour column was empty in the old sheet.','Add the colour with Edit item.'],['Note cut off','The note was cut off in the old sheet: "inv 20…".','Retype the note, or ignore it.'],['Size written as text','Size "8 ½" was read as 8.','Check if half sizes are stocked.']]};
+  const issues=[];let id=0;
+  NEG.forEach(ix=>{const it=items[ix],s=Math.round((it.from+it.to)/2);issues.push({id:'q'+id++,lvl:'imp',it:it.id,type:'Stock below zero',wrong:'The stock card works out to '+base[it.id][s]+' pairs for size '+s+'.',check:'Count size '+s+' on the shelf, then record a stock count.'})});
+  const add=(lvl,n)=>{for(let k=0;k<n;k++){const it=items[Math.floor(R()*items.length)],s=it.from+Math.floor(R()*(it.to-it.from+1)),tp=IT[lvl][k%IT[lvl].length];const f=x=>x.replace(/\{s\}/g,s).replace('{q}',6+Math.floor(R()*14)).replace('{dt}',fmt(Math.floor(R()*900)+30,true));issues.push({id:'q'+id++,lvl,it:it.id,type:tp[0],wrong:f(tp[1]),check:f(tp[2])})}};
+  add('imp',8);add('chk',64);add('min',71);
+  return{items,base,hist,agg,issues};
+}
+
+class Component extends DCLogic{
+  lid=1;D=build();el={};lastDr=null;
+  ACC={admin:{u:'hafiz',p:'1234',name:'Hafiz',title:'Admin'},staff:{u:'aina',p:'0000',name:'Aina',title:'User'}};
+  signIn(){const s=this.state,r=Object.keys(this.ACC).find(k=>this.ACC[k].u===s.lg.u.trim().toLowerCase()&&this.ACC[k].p===s.lg.p),a=r&&this.ACC[r];if(r){this.setState({role:r,page:'sale',mode:'sale',drawer:null,act:null,lg:{role:s.lg.role,u:'',p:'',err:''}});this.toast('Signed in as '+a.name+(r==='admin'?' · admin mode':''),'info')}else this.setState({lg:{...s.lg,p:'',err:'Username or PIN is wrong.'}})}
+  state={role:null,lg:{role:'admin',u:'',p:'',err:''},page:'sale',mode:'sale',theme:(this.props&&this.props.theme)||'light',w:typeof window!=='undefined'?window.innerWidth:1280,rm:false,
+    lines:[{id:this.lid++,q:'',it:null,size:'',pairs:''}],hl:0,active:null,date:'2026-10-07',note:'',entries:[],toasts:[],
+    q:'',cat:'all',sort:'name',hide:false,period:30,cats:CATS0.slice(),items:this.D.items.map(x=>({...x})),iss:{},issTab:'imp',issShow:20,
+    drawer:null,act:null,inp:{},ex:{from:'',to:''},actNote:'',edit:null,modal:null,itemCat:'all',newCat:'',catEdit:null,alarms:{items:{},cats:{}},alarmPop:null,alarmQ:'',trendId:null,cmp:null,navCol:false,pins:Object.keys(this.D.agg).sort((a,b)=>this.D.agg[b].s365-this.D.agg[a].s365).slice(0,2),alAdd:{id:'',th:'2',why:''},newCatHue:null,addCatOpen:false};
+
+  componentDidMount(){
+    this.onResize=()=>this.setState({w:window.innerWidth});window.addEventListener('resize',this.onResize);
+    try{this.mq=window.matchMedia('(prefers-reduced-motion: reduce)');this.setState({rm:this.mq.matches});this.mqf=e=>this.setState({rm:e.matches});this.mq.addEventListener('change',this.mqf)}catch(e){}
+    this.onKey=e=>{
+      if(e.key==='Escape'){if(this.state.alarmPop)this.setState({alarmPop:null});else if(this.state.modal)this.setState({modal:null});else if(this.state.drawer)this.closeDrawer()}
+      if(e.key==='/'&&this.state.page==='stock'&&!/input|select|textarea/i.test(document.activeElement.tagName)){e.preventDefault();this.el.search&&this.el.search.focus()}
+    };
+    window.addEventListener('keydown',this.onKey);
+    this.applyVars();this.focusLine(this.state.lines[0].id);
+  }
+  componentWillUnmount(){window.removeEventListener('resize',this.onResize);window.removeEventListener('keydown',this.onKey);if(this.mq)this.mq.removeEventListener('change',this.mqf)}
+  componentDidUpdate(pp){this.applyVars();if(pp.theme!==this.props.theme&&this.props.theme)this.setState({theme:this.props.theme})}
+  applyVars(){const r=this.root;if(!r||!this.T)return;r.style.transition=this.state.rm?'none':VARS.map(v=>'--'+v+' 240ms ease').join(', ');for(const k in this.T)r.style.setProperty('--'+k,this.T[k])}
+
+  pal(dark,k){
+    const o=(l,c,h)=>`oklch(${l} ${+c.toFixed(3)} ${h})`,[h,c]=H[k],T={};
+    for(const kk in H)T['c-'+kk]=dark?o(.76,H[kk][1],H[kk][0]):o(.5,H[kk][1],H[kk][0]);
+    return Object.assign(T,dark?{bg:o(.185,.008,260),surface:o(.225,.009,260),sunk:o(.2,.008,260),ink:o(.95,.005,85),muted:o(.72,.012,260),line:o(.32,.01,260),acc:o(.76,c,h),'acc-ink':o(.2,.03,h),'acc-soft':o(.28,c*.3,h),'acc-text':o(.82,c,h),'acc-line':o(.42,c*.45,h),neg:o(.74,.16,27),'neg-soft':o(.31,.07,27),warn:o(.84,.13,80),'warn-soft':o(.32,.055,75)}
+      :{bg:o(.975,.005,85),surface:o(.997,.002,85),sunk:o(.955,.006,85),ink:o(.24,.012,60),muted:o(.5,.012,60),line:o(.9,.007,85),acc:o(.5,c,h),'acc-ink':'oklch(1 0 0)','acc-soft':o(.955,c*.22,h),'acc-text':o(.45,c,h),'acc-line':o(.86,c*.4,h),neg:o(.53,.2,27),'neg-soft':o(.95,.035,27),warn:o(.55,.15,50),'warn-soft':o(.95,.05,70)});
+  }
+  toast(msg,kind,undo){const id=Date.now()+Math.random();this.setState(s=>({toasts:[...s.toasts,{id,msg,kind:kind||'ok',undo}].slice(-4)}));setTimeout(()=>this.setState(s=>({toasts:s.toasts.filter(t=>t.id!==id)})),5500)}
+  deltas(){const m={};this.state.entries.forEach(e=>e.lines.forEach(l=>{const k=l.it+'|'+l.sz;m[k]=(m[k]||0)+l.q}));return m}
+  stat(it,st){
+    const a=this.D.agg[it.id]||{s7:0,s30:0,s90:0,s365:0,sz30:{},sz90:{},mon:Array(12).fill(0),last:null};
+    let s7=a.s7,s30=a.s30,s90=a.s90,s365=a.s365,last=a.last;const mon=a.mon.slice(),sz30={...a.sz30},sz90={...a.sz90};
+    this.state.entries.forEach(e=>{if(e.type!=='sold')return;e.lines.forEach(l=>{if(l.it!==it.id)return;const q=-l.q;if(e.d<7)s7+=q;if(e.d<30){s30+=q;sz30[l.sz]=(sz30[l.sz]||0)+q}if(e.d<90){s90+=q;sz90[l.sz]=(sz90[l.sz]||0)+q}if(e.d<365)s365+=q;const mi=mIdx(e.d);if(mi>=0)mon[mi]+=q;if(last===null||e.d<last)last=e.d})});
+    const sizes=rg(it.from,it.to);let total=0;sizes.forEach(z=>total+=st(it.id,z));
+    const wk=s90/13,cover=wk>0?Math.max(0,total)/wk:null;
+    const coverTxt=total<=0?'Out':cover===null?'No sales':cover>=52?'52+ wk':cover<1?'<1 wk':Math.round(cover)+' wk';
+    return{s7,s30,s90,s365,last,mon,total,cover,coverTxt,wk,sizes,sz30,sz90};
+  }
+  search(q,items){
+    const t=String(q).toLowerCase().split(/\s+/).map(norm).filter(Boolean);if(!t.length)return items.slice();
+    const nq=norm(q),cn=id=>(this.state.cats.find(c=>c.id===id)||{}).name||'';
+    return items.filter(it=>{const h=norm([it.tag,it.code,it.colour,it.details,it.brand,cn(it.cat)].join(' '));return t.every(x=>h.includes(x))||h.includes(nq)})
+      .sort((a,b)=>(norm(b.tag).startsWith(nq)?1:0)-(norm(a.tag).startsWith(nq)?1:0));
+  }
+  focusLine(id){setTimeout(()=>{const e=this.el['i'+id];e&&e.focus()},30)}
+  setLine(id,p,cb){this.setState(s=>({lines:s.lines.map(l=>l.id===id?{...l,...p}:l)}),cb)}
+  newLine(){return{id:this.lid++,q:'',it:null,size:'',pairs:''}}
+  addLine(){const nl=this.newLine();this.setState(s=>({lines:[...s.lines,nl]}),()=>this.focusLine(nl.id))}
+  removeLine(id){const s=this.state;if(s.lines.length===1){const nl=this.newLine();this.setState({lines:[nl]},()=>this.focusLine(nl.id))}else this.setState({lines:s.lines.filter(l=>l.id!==id)})}
+  pick(lid,itId){const it=this.state.items.find(i=>i.id===itId);this.setLine(lid,{it:itId,q:it.tag,size:''},()=>{this.setState({active:null});setTimeout(()=>{const e=this.el['s'+lid];e&&e.focus()},20)})}
+  setSize(lid,v){const ln=this.state.lines.find(l=>l.id===lid);if(v&&ln.it&&this.state.mode==='sale'){const it=this.state.items.find(i=>i.id===ln.it),th=this.alarmTh(it);if(th!==null){const now=this.st(it.id,+v);if(now<=th)this.toast('Alarm · '+it.tag+' size '+v+(now<=0?' is sold out':' has only '+now+' left'),'warn')}}this.setLine(lid,{size:v,pairs:ln.pairs||(v?'1':'')},()=>{const e=this.el['p'+lid];if(e&&v){e.focus();e.select&&e.select()}})}
+  itemKey(lid,e,sug){
+    const s=this.state;
+    if(e.key==='ArrowDown'){e.preventDefault();this.setState({hl:Math.min(s.hl+1,Math.max(0,sug.length-1))})}
+    else if(e.key==='ArrowUp'){e.preventDefault();this.setState({hl:Math.max(s.hl-1,0)})}
+    else if(e.key==='Enter'){e.preventDefault();if(e.ctrlKey||e.metaKey)return this.save();const ln=s.lines.find(l=>l.id===lid);if(ln.it){const el=this.el['s'+lid];el&&el.focus()}else if(sug[s.hl])this.pick(lid,sug[s.hl].id)}
+    else if(e.key==='Escape'){this.setState({active:null})}
+  }
+  pairsKey(lid,e){
+    if(e.key!=='Enter')return;e.preventDefault();if(e.ctrlKey||e.metaKey)return this.save();
+    const L=this.state.lines,i=L.findIndex(l=>l.id===lid);if(i===L.length-1)this.addLine();else this.focusLine(L[i+1].id);
+  }
+  save(){
+    const s=this.state;
+    if(this.props.readOnly)return this.toast("Can't save in this view. Open the app in its own window to save.",'err');
+    const ok=s.lines.filter(l=>l.it&&l.size&&parseInt(l.pairs)>0),skipped=s.lines.filter(l=>l.q&&!(l.it&&l.size&&parseInt(l.pairs)>0)).length;
+    if(!ok.length)return this.toast('Nothing to save yet. Pick an item, a size and the number of pairs.','err');
+    const sign=s.mode==='sale'?-1:1;
+    const e={id:'e'+Date.now(),type:s.mode==='sale'?'sold':'in',d:isoAgo(s.date),lines:ok.map(l=>({it:l.it,sz:+l.size,q:sign*parseInt(l.pairs)})),note:s.note.trim(),time:new Date().toLocaleTimeString('en-MY',{hour:'numeric',minute:'2-digit'})};
+    const pairs=e.lines.reduce((a,l)=>a+Math.abs(l.q),0),nl=this.newLine();
+    const al=this.alarmCheck(e.lines);this.setState({entries:[e,...s.entries],lines:[nl],note:'',active:null,alarmPop:this.popFor(al)},()=>this.focusLine(nl.id));
+    this.toast((s.mode==='sale'?'Sale saved':'Stock in saved')+' · '+pairs+' pair'+(pairs>1?'s':'')+' · stock updated'+(skipped?' · '+skipped+' unfinished line skipped':''),'ok',()=>this.undo(e.id));
+  }
+  undo(id){const e=this.state.entries.find(x=>x.id===id);if(!e)return;this.setState(s=>({entries:s.entries.filter(x=>x.id!==id)}));this.toast((e.type==='sold'?'Sale':LBL[e.type])+' undone · stock put back','info')}
+  setPage(p){if(this.state.role==='staff'&&p!=='sale'){this.toast('That page needs an admin account','info');return}this.setState({page:p,drawer:null,act:null},()=>{if(p==='sale')this.focusLine(this.state.lines[0].id)})}
+  openItem(id){if(this.state.role==='staff')return;this.setState({drawer:{kind:'item',id},act:null,inp:{},actNote:''})}
+  closeDrawer(){this.setState({drawer:null,act:null})}
+  startAct(k){this.setState({act:k,inp:{},ex:{from:'',to:''},actNote:''})}
+  saveAct(it,st){
+    const s=this.state,a=s.act,lines=[];
+    if(this.props.readOnly)return this.toast("Can't save in this view. Open the app in its own window to save.",'err');
+    if(a==='ex'){if(!s.ex.from||!s.ex.to||s.ex.from===s.ex.to)return this.toast('Pick the size brought back and a different size taken.','err');lines.push({it:it.id,sz:+s.ex.from,q:1},{it:it.id,sz:+s.ex.to,q:-1})}
+    else rg(it.from,it.to).forEach(z=>{const raw=s.inp[z];if(raw===undefined||raw==='')return;const n=parseInt(raw);if(isNaN(n))return;if(a==='count'){const d=n-st(it.id,z);if(d)lines.push({it:it.id,sz:z,q:d})}else if(n>0)lines.push({it:it.id,sz:z,q:a==='sale'?-n:n})});
+    if(!lines.length)return this.toast(a==='count'?'Your counts match the stock card. Nothing to change.':'Type at least one number in the grid.',a==='count'?'info':'err');
+    const type={sale:'sold',in:'in',ret:'ret',count:'count',ex:'ex'}[a];
+    const e={id:'e'+Date.now(),type,d:0,lines,note:s.actNote.trim(),time:new Date().toLocaleTimeString('en-MY',{hour:'numeric',minute:'2-digit'})};
+    const pairs=lines.reduce((x,l)=>x+Math.abs(l.q),0);
+    const al=this.alarmCheck(lines);this.setState({entries:[e,...s.entries],act:null,inp:{},actNote:'',alarmPop:this.popFor(al)});
+    const msg=a==='count'?'Stock count saved · '+lines.length+' size'+(lines.length>1?'s':'')+' corrected':a==='ex'?'Size exchange saved · stock updated':(a==='sale'?'Sale saved':a==='in'?'Stock in saved':'Return saved')+' · '+pairs+' pair'+(pairs>1?'s':'')+' · stock updated';
+    this.toast(msg,'ok',()=>this.undo(e.id));
+  }
+  openEdit(it,cat){const th=it?this.alarmTh(it):null;this.setState({drawer:{kind:'edit'},edit:it?{...it,err:'',alOn:th!==null,alTh:th===null?2:th,alTouched:false}:{id:null,tag:'',cat:cat||(this.state.cat!=='all'?this.state.cat:'unc'),colour:'',brand:'',details:'',sys:'UK',from:4,to:12,note:'',err:'',alOn:false,alTh:2,alTouched:false}})}
+  setEd(p){this.setState(s=>({edit:{...s.edit,...p,err:''}}))}
+  saveEdit(){
+    const s=this.state,e=s.edit;
+    if(!e.tag.trim())return this.setEd({err:'Give the item a name or model number, for example "Line 7 2146".'})||this.setState(x=>({edit:{...x.edit,err:'Give the item a name or model number, for example "Line 7 2146".'}}));
+    if(+e.from>+e.to)return this.setState(x=>({edit:{...x.edit,err:'The first size must be smaller than the last size.'}}));
+    if(s.items.some(i=>!i.removed&&i.id!==e.id&&norm(i.tag)===norm(e.tag)))return this.setState(x=>({edit:{...x.edit,err:'There is already an item called "'+e.tag.trim()+'". Use a different name.'}}));
+    const clean={...e,tag:e.tag.trim(),from:+e.from,to:+e.to};delete clean.err;delete clean.alOn;delete clean.alTh;delete clean.alTouched;
+    if(e.id){this.setState({items:s.items.map(i=>i.id===e.id?{...i,...clean}:i),drawer:{kind:'item',id:e.id},edit:null});this.toast('Item saved · '+clean.tag,'ok');if(e.alTouched)this.setItemAlarm(e.id,e.alOn,e.alTh)}
+    else{const id='n'+Date.now();this.setState({items:[...s.items,{...clean,id,code:'K'+(1001+s.items.length),rate:0}],drawer:null,edit:null});this.toast('Item added · '+clean.tag+' · low-stock alarm '+(e.alOn?'on':'off'),'ok');if(e.alOn)this.setItemAlarm(id,true,e.alTh)}
+  }
+  confirmModal(){
+    const s=this.state,m=s.modal;if(!m)return;
+    if(m.kind==='removeItem'){const it=s.items.find(i=>i.id===m.id);this.setState({items:s.items.map(i=>i.id===m.id?{...i,removed:true}:i),modal:null,drawer:null});this.toast(it.tag+' removed · its past sales stay in reports','ok',()=>this.setState(x=>({items:x.items.map(i=>i.id===m.id?{...i,removed:false}:i)})))}
+    if(m.kind==='delCat'){const c=s.cats.find(x=>x.id===m.id),to=m.to;const moved=s.items.filter(i=>i.cat===m.id&&!i.removed).length;this.setState({cats:s.cats.filter(x=>x.id!==m.id),items:s.items.map(i=>i.cat===m.id?{...i,cat:to}:i),modal:null,itemCat:s.itemCat===m.id?'all':s.itemCat});this.toast('Category "'+c.name+'" deleted'+(moved?' · '+moved+' items moved to '+s.cats.find(x=>x.id===to).name:''),'ok')}
+  }
+  moveCat(i,d){const c=this.state.cats.slice(),j=i+d;if(j<0||j>=c.length)return;[c[i],c[j]]=[c[j],c[i]];this.setState({cats:c})}
+  addCat(){const n=this.state.newCat.trim();if(!n)return this.toast('Type a name for the new category first.','err');if(this.state.cats.some(c=>c.name.toLowerCase()===n.toLowerCase()))return this.toast('There is already a category called "'+n+'".','err');this.setState(s=>{const nh=HUES.find(h=>!s.cats.some(c=>c.hue===h));const hue=s.newCatHue==null?(nh==null?HUES[0]:nh):s.newCatHue;return{cats:[...s.cats,{id:'c'+Date.now(),name:n,hue}],newCat:'',newCatHue:null,addCatOpen:false}});this.toast('Category added · '+n+' · low-stock alarm off','ok')}
+  commitCat(){const ce=this.state.catEdit;if(!ce)return;const n=ce.name.trim();if(n)this.setState(s=>({cats:s.cats.map(c=>c.id===ce.id?{...c,name:n}:c),catEdit:null}));else this.setState({catEdit:null})}
+  csv(name,rows){const t=rows.map(r=>r.map(v=>{v=String(v==null?'':v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(',')).join('\n');try{const b=new Blob([t],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();this.toast('Downloaded '+name,'info')}catch(e){this.toast('Download did not work in this view. Try again in its own window.','err')}}
+
+  renderVals(){
+    const s=this.state,D=this.D,dark=s.theme==='dark',narrow=s.w<860,wide=!narrow;
+    const ak=s.page==='sale'?(s.mode==='in'?'in':'sale'):s.page;
+    this.T=this.pal(dark,ak);
+    const dm=this.deltas(),st=(id,sz)=>((D.base[id]||{})[sz]||0)+(dm[id+'|'+sz]||0);this.st=st;
+    const items=s.items.filter(i=>!i.removed),byId=id=>s.items.find(i=>i.id===id);
+    const catName=id=>(s.cats.find(c=>c.id===id)||{name:'Uncategorised'}).name;
+    const S={};s.items.forEach(it=>S[it.id]=this.stat(it,st));
+    const totalPairs=items.reduce((a,i)=>a+S[i.id].total,0);
+    const bold=this.props.headerStyle==='bold';
+    const L={dir:narrow?'column':'row',navW:narrow?'100%':s.navCol?'84px':'272px',navH:narrow?'auto':'100vh',navPos:narrow?'relative':'sticky',navDir:narrow?'row':'column',navGap:narrow?'10px 16px':'24px',navPad:narrow?'12px 16px':s.navCol?'20px 12px':'22px 14px',navBR:narrow?'0':'1px solid var(--line)',navBB:narrow?'1px solid var(--line)':'0',
+      pad:narrow?'18px 16px 60px':'26px 32px 60px',headPad:narrow?'22px 16px 18px':'28px 32px 22px',lineCols:narrow?'minmax(0,1fr) minmax(0,1fr) 40px':'minmax(0,2.4fr) minmax(0,1.4fr) 92px 130px 40px',wide,sideMax:narrow?'100%':'340px',sideSticky:narrow?'static':'sticky',toastLeft:narrow?'20px':'auto',toggleW:narrow?'100%':'min(480px,100%)',full:narrow||!s.navCol,canCollapse:!narrow,colIcon:s.navCol?'»':'«',colTitle:s.navCol?'Expand sidebar':'Collapse sidebar',brandDir:!narrow&&s.navCol?'column':'row',navBtnPad:!narrow&&s.navCol?'0':'0 14px',navJust:!narrow&&s.navCol?'center':'flex-start',navWrap:narrow?'wrap':'nowrap',themeDir:!narrow&&s.navCol?'column':'row',showSigned:!narrow&&!s.navCol,catMax:narrow?'100%':'420px'};
+    const CC=id=>{const c=s.cats.find(x=>x.id===id),h=c?c.hue:null;if(h==null)return{cc:dark?'oklch(0.7 0.01 260)':'oklch(0.6 0.01 260)',cs:dark?'oklch(0.3 0.01 260)':'oklch(0.94 0.005 260)'};return{cc:dark?'oklch(0.74 0.13 '+h+')':'oklch(0.58 0.15 '+h+')',cs:dark?'oklch(0.32 0.06 '+h+')':'oklch(0.94 0.04 '+h+')'}};
+    const hb={bg:bold?'var(--acc)':'var(--acc-soft)',ink:bold?'var(--acc-ink)':'var(--ink)'};
+    const hitsArr=[];items.forEach(it=>{const th=this.alarmTh(it);if(th===null)return;const low=rg(it.from,it.to).filter(z=>st(it.id,z)<=th);if(low.length)hitsArr.push({it,th,low})});
+    const alarmSetN=items.filter(it=>this.alarmTh(it)!==null).length,alOpen=!!(s.drawer&&s.drawer.kind==='alarms');
+    const al={hits:hitsArr.map(h=>({tag:h.it.tag,sizes:h.low.map(z=>{const v=st(h.it.id,z);return 'size '+z+': '+(v<=0?'none left':v+' left')}).join(' · '),open:()=>this.openItem(h.it.id),toIn:()=>this.addToIn(h.low.map(z=>({it:h.it.id,z})))})),
+      noHits:!hitsArr.length,noHitsTxt:alarmSetN?'Nothing ringing. Every shoe with an alarm is above its alarm level.':'No alarms set yet. Turn one on below for a category or a single shoe.',hitsMeta:alarmSetN+' shoe'+(alarmSetN===1?'':'s')+' watched',btnInk:dark?'oklch(0.2 0.03 255)':'#fff',
+      cats:s.cats.map(c=>{const a=s.alarms.cats[c.id],on=!!(a&&a.on),th=a?a.th:2,n=items.filter(i=>i.cat===c.id).length;return{name:c.name,meta:n+' shoes · '+(on?'alarm at '+(th===0?'0':th+' or less'):'alarm off'),...sw(on,()=>this.setCatAlarm(c.id,!on,th)),th:String(th),onTh:e=>this.setCatAlarm(c.id,true,+e.target.value,true),off:!on,op:on?1:.5}}),
+      q:s.alarmQ,onQ:e=>this.setState({alarmQ:e.target.value})};
+    const alIds=Object.keys(s.alarms.items).filter(id=>{const it=byId(id);return it&&!it.removed});
+    al.items=alIds.map(id=>{const i=byId(id),a=s.alarms.items[id];return{tag:i.tag,cc:CC(i.cat).cc,src:(a.on?'Alarm at '+(a.th===0?'0':a.th+' or fewer'):'Paused')+(a.why?' · '+a.why:''),...sw(a.on,()=>this.setItemAlarm(id,!a.on,a.th)),th:String(a.th),onTh:e=>this.setItemAlarm(id,true,+e.target.value,true),off:!a.on,op:a.on?1:.5,remove:()=>this.removeItemAlarm(id)}});
+    al.itemsEmpty=!alIds.length;al.itemsMeta=alIds.length+' shoe'+(alIds.length===1?'':'s');
+    al.addId=s.alAdd.id;al.addTh=s.alAdd.th;al.addWhy=s.alAdd.why;al.addBg=dark?'oklch(0.48 0.17 27)':'oklch(0.53 0.2 27)';
+    al.addOpts=items.slice().sort((a,b)=>a.tag.localeCompare(b.tag)).map(i=>({id:i.id,label:i.tag+(s.alarms.items[i.id]?' (has alarm)':'')}));
+    al.onAddId=e=>this.setState({alAdd:{...s.alAdd,id:e.target.value}});al.onAddTh=e=>this.setState({alAdd:{...s.alAdd,th:e.target.value}});al.onAddWhy=e=>this.setState({alAdd:{...s.alAdd,why:e.target.value}});al.add=()=>this.addShoeAlarm();
+    const nav=[['sale',s.mode==='in'?'Stock in':'New sale'],['stock','Stock'],['sales','Sales'],['alarms','Low-stock alarms']].filter(([k])=>s.role!=='staff'||k==='sale').map(([k,l])=>{const isA=k==='alarms',on=isA?alOpen:s.page===k;return{label:l,go:isA?()=>this.openAlarms():()=>this.setPage(k),bg:on?'var(--acc-soft)':'transparent',fw:on?700:500,bar:on?'var(--acc)':'transparent',dot:'var(--c-'+(k==='sale'&&s.mode==='in'?'in':k)+')',hasBadge:isA&&hitsArr.length>0,badge:hitsArr.length,icon:'assets/nav-'+k+'.png'}});
+
+    // restock / gaps / slow
+    const restockAll=items.filter(i=>S[i.id].s90>0&&S[i.id].cover!==null&&S[i.id].cover<4).sort((a,b)=>S[a.id].cover-S[b.id].cover);
+    const mkR=i=>({tag:i.tag,sub:S[i.id].total+' left · sells '+f1(S[i.id].wk)+' a week',cover:S[i.id].coverTxt,open:()=>this.openItem(i.id),toIn:()=>this.restockLine(i)});
+    const gaps=[];items.forEach(i=>S[i.id].sizes.forEach(z=>{const n=S[i.id].sz90[z]||0;if(st(i.id,z)<=0&&n>=3)gaps.push({tag:i.tag+' · size '+z,sub:n+' sold in 3 months, none left',n,open:()=>this.openItem(i.id)})}));gaps.sort((a,b)=>b.n-a.n);
+    const slowAll=items.filter(i=>S[i.id].total>=10&&(S[i.id].s90===0||S[i.id].cover>30)).sort((a,b)=>S[b.id].total-S[a.id].total);
+    const slowPairs=slowAll.reduce((a,i)=>a+S[i.id].total,0);
+    const health={restockN:restockAll.length,gapN:gaps.length,slowPairs:n0(slowPairs),restock:restockAll.slice(0,6).map(mkR),gaps:gaps.slice(0,6),slow:slowAll.slice(0,5).map(i=>({tag:i.tag,sub:S[i.id].total+' pairs · '+(S[i.id].s90===0?'no sales in 3 months':'sells '+f1(S[i.id].wk)+' a week'),open:()=>this.openItem(i.id)}))};
+
+    // home
+    const sign=s.mode==='sale'?-1:1,used={},heads=[];
+    const lines=s.lines.map(ln=>{
+      const it=ln.it?byId(ln.it):null,lnTh=it?this.alarmTh(it):null,act=s.active===ln.id,show=act&&!it&&ln.q.trim().length>0;
+      const sug=show?this.search(ln.q,items).slice(0,7):[];
+      let now=null,after=null;
+      if(it&&ln.size){const k=it.id+'|'+ln.size;now=st(it.id,+ln.size)+(used[k]||0);const p=parseInt(ln.pairs)||0;after=now+sign*p;used[k]=(used[k]||0)+sign*p;
+        const sold=S[it.id].sz30[ln.size]||0;
+        if(s.mode==='sale'&&after<=1&&p>0)heads.push({title:it.tag+' size '+ln.size+(after<0?' will go below zero.':after===0?' will sell out.':' will have 1 left.'),txt:sold?sold+' sold in this size in the last 30 days. Add it to your next order.':'Not a fast seller, so no rush.'});
+        if(s.mode==='in'&&now<=0)heads.push({title:it.tag+' size '+ln.size+' was sold out.',txt:sold?sold+' sold in the last 30 days, so this delivery is well timed.':'Good to have it back on the shelf.'});
+      }
+      return{id:ln.id,q:ln.q,size:ln.size,pairs:ln.pairs,qWeight:it?600:400,span:narrow?'1 / -1':'auto',
+        itemRef:el=>{this.el['i'+ln.id]=el},sizeRef:el=>{this.el['s'+ln.id]=el},pairsRef:el=>{this.el['p'+ln.id]=el},
+        onQ:e=>{this.setLine(ln.id,{q:e.target.value,it:null,size:''});this.setState({active:ln.id,hl:0})},
+        onKey:e=>this.itemKey(ln.id,e,sug),onFocus:()=>this.setState({active:ln.id,hl:0}),onBlur:()=>setTimeout(()=>{if(this.state.active===ln.id)this.setState({active:null})},150),
+        showSug:show,noSug:show&&!sug.length,
+        sug:sug.map((x,i)=>{const t=S[x.id].total;return{tag:x.tag,cc:CC(x.cat).cc,sub:x.colour+' · '+x.details,stock:t+' in stock',stockColor:t<=0?'var(--neg)':'var(--muted)',bg:i===s.hl?'var(--acc-soft)':'transparent',pick:e=>{e.preventDefault();this.pick(ln.id,x.id)}}}),
+        hasItem:!!it,sub:it?it.colour+' · '+it.details+' · '+S[it.id].total+' in stock':'',noItem:!it,sizeOp:it?1:.55,
+        sizes:it?rg(it.from,it.to).map(z=>({v:String(z),label:String(z)})):[],
+        onSize:e=>this.setSize(ln.id,e.target.value),onPairs:e=>this.setLine(ln.id,{pairs:e.target.value}),onPairsKey:e=>this.pairsKey(ln.id,e),
+        afterTxt:after===null?'—':String(after),afterColor:after===null?'var(--muted)':after<0?'var(--neg)':after<=1?'var(--warn)':'var(--ink)',alarm:s.mode==='sale'&&lnTh!==null&&after!==null&&after<=lnTh,alarmTxt:'Alarm · '+(after!==null&&after<=0?'will sell out':'drops to alarm level'),neg:after!==null&&after<0,showNow:now!==null&&!(after<0),nowTxt:'now '+now,
+        remove:()=>this.removeLine(ln.id)};
+    });
+    const homeTotal=s.lines.reduce((a,l)=>a+(l.it&&l.size?(parseInt(l.pairs)||0):0),0);
+    const myType=s.mode==='sale'?'sold':'in';
+    const homeEntries=s.entries.filter(e=>e.type===myType).map(e=>({rows:e.lines.map(l=>({tag:(byId(l.it)||{}).tag,sz:l.sz,q:Math.abs(l.q)})),meta:(e.d===0?'Today':fmt(e.d,true))+' · '+e.time+(e.note?' · '+e.note:''),pairs:(myType==='sold'?'−':'+')+e.lines.reduce((a,l)=>a+Math.abs(l.q),0),undo:()=>this.undo(e.id)}));
+    const isSale=s.mode==='sale';
+    const home={eyebrow:isSale?'Money in':'Goods arriving',title:isSale?'New sale':'Stock in',sub:isSale?'Key in what was sold. Stock goes down as you save.':'Key in a delivery from a supplier. Stock goes up as you save.',
+      saleIcBg:isSale?'rgba(255,255,255,.22)':'var(--c-sale)',saleIcInk:isSale?'inherit':(dark?'oklch(0.2 0.03 150)':'#fff'),inIcBg:!isSale?'rgba(255,255,255,.22)':'var(--c-in)',inIcInk:!isSale?'inherit':(dark?'oklch(0.2 0.03 255)':'#fff'),saleBg:isSale?'var(--c-sale)':'transparent',saleInk:isSale?(dark?'oklch(0.2 0.03 150)':'#fff'):'var(--muted)',saleDot:isSale?(dark?'oklch(0.2 0.03 150)':'#fff'):'var(--c-sale)',
+      inBg:!isSale?'var(--c-in)':'transparent',inInk:!isSale?(dark?'oklch(0.2 0.03 255)':'#fff'):'var(--muted)',inDot:!isSale?(dark?'oklch(0.2 0.03 255)':'#fff'):'var(--c-in)',
+      noteLabel:isSale?'Receipt no.':'Supplier / invoice no.',notePh:isSale?'e.g. 4821':'e.g. JLG invoice 2207',total:homeTotal+' pair'+(homeTotal===1?'':'s'),saveLabel:isSale?'Save sale':'Save stock in',
+      listTitle:isSale?'Sales keyed in here':'Deliveries keyed in here',entries:homeEntries,noEntries:!homeEntries.length,emptyTxt:isSale?'Nothing yet. Sales you save appear here with an Undo button.':'Nothing yet. Deliveries you save appear here with an Undo button.'};
+    let tSold=0,tRecv=0;items.forEach(i=>{(D.hist[i.id]||[]).forEach(e=>{if(e.d===0){const q=e.lines.reduce((a,l)=>a+l.q,0);if(e.t==='sold')tSold-=q;if(e.t==='in')tRecv+=q}})});
+    s.entries.forEach(e=>{if(e.d!==0)return;const q=e.lines.reduce((a,l)=>a+l.q,0);if(e.type==='sold')tSold-=q;if(e.type==='in')tRecv+=q});
+
+    // stock page
+    let sq=this.search(s.q,items).filter(it=>(s.cat==='all'||it.cat===s.cat)&&(!s.hide||S[it.id].total>0));
+    if(!s.q.trim()||s.sort!=='name'){const f={name:(a,b)=>a.tag.localeCompare(b.tag),stock:(a,b)=>S[b.id].total-S[a.id].total,best:(a,b)=>S[b.id].s30-S[a.id].s30,cover:(a,b)=>(S[a.id].total<=0?-1:S[a.id].cover===null?999:S[a.id].cover)-(S[b.id].total<=0?-1:S[b.id].cover===null?999:S[b.id].cover)}[s.sort];sq=sq.slice().sort(f)}
+    const HATCH='repeating-linear-gradient(135deg,var(--line) 0 1px,transparent 1px 6px)';
+    const drawerId=s.drawer&&s.drawer.kind==='item'?s.drawer.id:null;
+    const mkRow=(it,sizes)=>{const X=S[it.id],sel=drawerId===it.id;
+      return{tag:it.tag,sub:it.colour+' · '+it.details,open:()=>this.openItem(it.id),bg:sel?'var(--acc-soft)':'transparent',stickyBg:sel?'var(--acc-soft)':'var(--surface)',mark:sel?'inset 4px 0 0 var(--acc)':'inset 4px 0 0 '+CC(it.cat).cc,
+        remove:e=>{e.stopPropagation();this.setState({modal:{kind:'removeItem',id:it.id}})},
+        cells:sizes.map(z=>{if(z<it.from||z>it.to)return{txt:'',bg:HATCH,color:'inherit',fw:400,title:'Size '+z+' not stocked'};const v=st(it.id,z);
+          return v<0?{txt:v,bg:'var(--neg-soft)',color:'var(--neg)',fw:700,title:'Size '+z+': below zero, needs checking'}:v===0?{txt:'–',bg:'transparent',color:'var(--muted)',fw:400,title:'Size '+z+': none left'}:v===1?{txt:'1',bg:'var(--warn-soft)',color:'var(--warn)',fw:700,title:'Size '+z+': last pair'}:{txt:v,bg:'transparent',color:'var(--ink)',fw:500,title:'Size '+z+': '+v+' pairs'}}),
+        total:X.total,totalColor:X.total<0?'var(--neg)':'var(--ink)',s30:X.s30||'–'}};
+    const filtering=!!s.q.trim()||s.hide;
+    const groups=s.cats.map((c,ci)=>{if(s.cat!=='all'&&c.id!==s.cat)return null;const rows=sq.filter(i=>i.cat===c.id);if(!rows.length&&filtering)return null;
+      const pairs=rows.reduce((a,i)=>a+S[i.id].total,0),ed=s.catEdit&&s.catEdit.id===c.id;
+      const tables=['UK','CAP','EU'].map(k=>{const rr=rows.filter(x=>x.sys===k);if(!rr.length)return null;const sizes=rg(Math.min(...rr.map(x=>x.from)),Math.max(...rr.map(x=>x.to)));return{label:SYS[k].label,sizes,rows:rr.map(it=>mkRow(it,sizes))}}).filter(Boolean);
+      tables.forEach(t=>t.showLabel=tables.length>1);
+      return{...CC(c.id),label:c.name,meta:rows.length+' item'+(rows.length===1?'':'s')+' · '+n0(pairs)+' pairs',tables,empty:!rows.length,
+        cycle:()=>this.cycleCat(c.id),addItem:()=>this.openEdit(null,c.id),up:()=>this.moveCat(ci,-1),down:()=>this.moveCat(ci,1),
+        editing:ed,notEditing:!ed,editVal:ed?s.catEdit.name:'',onEdit:e=>this.setState({catEdit:{id:c.id,name:e.target.value}}),onEditKey:e=>{if(e.key==='Enter')this.commitCat();if(e.key==='Escape')this.setState({catEdit:null})},commit:()=>this.commitCat(),
+        rename:()=>this.setState({catEdit:{id:c.id,name:c.name}}),del:()=>{const other=s.cats.find(x=>x.id!==c.id);if(!other)return this.toast('Keep at least one category.','err');this.setState({modal:{kind:'delCat',id:c.id,to:(s.cats.find(x=>x.id==='unc'&&x.id!==c.id)||other).id}})}}}).filter(Boolean);
+    const removed={has:s.items.some(i=>i.removed),list:s.items.filter(i=>i.removed).map(i=>({tag:i.tag,cat:catName(i.cat),cc:CC(i.cat).cc,restore:()=>{this.setState(x=>({items:x.items.map(y=>y.id===i.id?{...y,removed:false}:y)}));this.toast('Restored · '+i.tag,'ok')}}))};
+
+    // sales
+    const key={7:'s7',30:'s30',90:'s90',365:'s365'}[s.period],PL={7:'7 days',30:'30 days',90:'3 months',365:'12 months'};
+    const rk=items.map(it=>({it,n:S[it.id][key]})).filter(x=>x.n>0).sort((a,b)=>b.n-a.n);
+    const sold=rk.reduce((a,x)=>a+x.n,0),top=rk[0],mx=top?top.n:1;
+    const tiles=[{label:'Pairs sold',value:n0(sold),sub:'About '+f1(sold/(s.period/7))+' pairs a week'},{label:'Best seller',value:top?top.it.tag:'—',sub:top?top.n+' pairs · '+S[top.it.id].coverTxt+' of stock left':'No sales'}];
+    const ranked=rk.slice(0,25).map((x,i)=>{const X=S[x.it.id];const pinned=s.pins.includes(x.it.id);return{rank:i+1,cc:CC(x.it.cat).cc,pin:e=>{e.stopPropagation();this.togglePin(x.it.id)},pinTxt:pinned?'Pinned':'Pin',pinTitle:pinned?'Unpin':'Pin to watch closely',pinBg:pinned?'var(--acc)':'transparent',pinInk:pinned?'var(--acc-ink)':'var(--ink)',pinBorder:pinned?'var(--acc)':'var(--line)',tag:x.it.tag,cat:catName(x.it.cat),n:x.n,w:Math.round(x.n/mx*100)+'%',stock:X.total,stockColor:X.total<=0?'var(--neg)':'var(--ink)',cover:X.coverTxt,coverColor:X.total<=0?'var(--neg)':X.cover!==null&&X.cover<4?'var(--warn)':'var(--muted)',last:X.last===null?'—':X.last===0?'Today':fmt(X.last),open:()=>this.openItem(x.it.id),bg:drawerId===x.it.id?'var(--acc-soft)':'transparent'}});
+    const restockSales=rk.filter(x=>{const X=S[x.it.id];return X.total<=0||(X.cover!==null&&X.cover<4)}).slice(0,6).map(x=>({tag:x.it.tag,sold:x.n+' sold · '+S[x.it.id].total+' left',cover:S[x.it.id].coverTxt,open:()=>this.openItem(x.it.id)}));
+    const stockPos=items.reduce((a,i)=>a+Math.max(0,S[i.id].total),0)||1;
+    const catSales=s.cats.map(c=>{const its=items.filter(i=>i.cat===c.id);const cs=its.reduce((a,i)=>a+S[i.id][key],0),ck=its.reduce((a,i)=>a+Math.max(0,S[i.id].total),0);const sp=sold?cs/sold*100:0,kp=ck/stockPos*100,d=sp-kp;
+      return{name:c.name,sold:cs,soldW:sp.toFixed(1)+'%',stockW:kp.toFixed(1)+'%',soldPct:Math.round(sp)+'%',stockPct:Math.round(kp)+'%',verdict:!its.length?'No items':d>4?'Selling faster than you stock it':d<-4?'More stock than it sells':'Stock matches sales',verdictColor:d>4?'var(--warn)':d<-4?'var(--acc-text)':'var(--muted)'}});
+    const periods=[7,30,90,365].map(p=>({label:PL[p],go:()=>this.setState({period:p}),bg:s.period===p?'var(--acc)':'transparent',ink:s.period===p?'var(--acc-ink)':'var(--ink)'}));
+
+    const MN=k=>MON[(TODAY.getMonth()-11+k+24)%12],months=rg(0,11).map(MN);
+    const trendOf=mo=>{const l3=mo[8]+mo[9]+mo[10],p3=mo[5]+mo[6]+mo[7];return p3?Math.round((l3-p3)/p3*100):(l3?100:null)};
+    const trTxt=c=>c===null?'—':(c>0?'+':'')+c+'%',trCol=c=>c===null?'var(--muted)':c>10?'var(--acc-text)':c<-10?'var(--neg)':'var(--ink)';
+    const coverWords=X=>X.cover===null?'':X.cover<1?'less than a week':X.cover>=52?'over a year':'about '+Math.round(X.cover)+' weeks';
+    const byS=items.slice().sort((a,b)=>S[b.id].s365-S[a.id].s365);
+    const trI=(s.trendId&&byId(s.trendId)&&!byId(s.trendId).removed)?byId(s.trendId):byS[0];
+    let tr={};if(trI){const TX=S[trI.id],mo=TX.mon,tot=mo.reduce((a,b)=>a+b,0),avg=tot/12,mmx=Math.max(1,...mo),bi=mo.indexOf(Math.max(...mo)),ch=trendOf(mo);
+      const szMax=Math.max(1,...TX.sizes.map(z=>Math.max(TX.sz90[z]||0,st(trI.id,z))));
+      const outSel=TX.sizes.filter(z=>st(trI.id,z)<=0&&(TX.sz90[z]||0)>0);
+      const insight=!tot?'No sales in the last 12 months. '+TX.total+' pairs are on the shelf.':'Best month was '+MN(bi)+' with '+mo[bi]+' pairs. '+(ch===null?'':ch>10?'Sales are up '+ch+'% on the 3 months before. ':ch<-10?'Sales are down '+(-ch)+'% on the 3 months before. ':'Sales are steady. ')+(TX.total<=0?'No stock left, so sales stop until you restock.':TX.wk>0?'At '+f1(TX.wk)+' pairs a week, the '+TX.total+' pairs left last '+coverWords(TX)+'.':TX.total+' pairs on the shelf with no recent sales.')+(outSel.length?' Size'+(outSel.length>1?'s ':' ')+outSel.join(', ')+(outSel.length>1?' are':' is')+' sold out but still selling.':'');
+      const trP=s.pins.includes(trI.id);
+      tr={pin:()=>this.togglePin(trI.id),pinTxt:trP?'Pinned':'Pin this shoe',pinBg:trP?'var(--acc)':'var(--surface)',pinInk:trP?'var(--acc-ink)':'var(--ink)',pinBorder:trP?'var(--acc)':'var(--line)',id:trI.id,tag:trI.tag,sub:trI.colour+' · '+catName(trI.cat)+' · '+SYS[trI.sys].short+' '+trI.from+'–'+trI.to,insight,
+        opts:byS.map(i=>({id:i.id,label:i.tag+' · '+S[i.id].s365+' sold'})),onPick:e=>this.setState({trendId:e.target.value}),
+        stats:[{l:'Sold, 12 months',v:n0(tot),s:'pairs',c:'var(--ink)'},{l:'Monthly average',v:f1(avg),s:'pairs a month',c:'var(--ink)'},{l:'Best month',v:MN(bi),s:mo[bi]+' pairs',c:'var(--ink)'},{l:'Trend',v:trTxt(ch),s:'last 3 full months',c:trCol(ch)},{l:'In stock',v:String(TX.total),s:TX.coverTxt==='Out'?'sold out':TX.coverTxt+' left',c:TX.total<=0?'var(--neg)':TX.cover!==null&&TX.cover<4?'var(--warn)':'var(--ink)'}],
+        bars:mo.map((v,k)=>({v:v||'',m:MN(k),h:Math.round(v/mmx*150)+'px',op:k===11?.5:1,title:MN(k)+(k===11?' (so far)':'')+': '+v+' pairs'})),
+        avgB:Math.round(avg/mmx*150)+'px',avgTxt:f1(avg)+' a month',partial:MN(11)+' is the current month, so its bar is lighter ('+TODAY.getDate()+' days so far).',
+        sizes:TX.sizes.map(z=>{const sd=TX.sz90[z]||0,v=st(trI.id,z);return{s:z,sold:sd,stock:v<=0?(v<0?v+' left':'none left'):v+' left',stockColor:v<=0?'var(--neg)':v===1?'var(--warn)':'var(--muted)',soldW:Math.max(1,sd/szMax*100)+'%',stockW:Math.max(1,Math.max(0,v)/szMax*100)+'%',title:'Size '+z+': '+sd+' sold in 3 months, '+v+' in stock'}})};}
+    const COLS=dark?['oklch(0.78 0.14 150)','oklch(0.76 0.13 255)','oklch(0.78 0.14 50)','oklch(0.76 0.14 320)','oklch(0.8 0.1 200)']:['oklch(0.52 0.15 150)','oklch(0.5 0.16 255)','oklch(0.6 0.17 45)','oklch(0.5 0.17 320)','oklch(0.52 0.1 200)'];
+    const cmpIds=(s.cmp||byS.slice(0,4).map(i=>i.id)).filter(id=>byId(id)&&!byId(id).removed);
+    const series=cmpIds.map((id,i)=>{const X=S[id];return{id,it:byId(id),X,mon:X.mon,color:COLS[i%5],sum:X.mon.reduce((a,b)=>a+b,0),ch:trendOf(X.mon)}});
+    const cmax=Math.max(1,...series.flatMap(x=>x.mon)),CE=React.createElement,yv=v=>190-(v/cmax)*180;
+    const svg=series.length?CE('svg',{viewBox:'0 0 600 200',preserveAspectRatio:'none',style:{width:'100%',height:'220px',display:'block',overflow:'visible'}},
+      [0,.5,1].map((q,i)=>CE('line',{key:'g'+i,x1:0,x2:600,y1:yv(cmax*q),y2:yv(cmax*q),style:{stroke:'var(--line)',strokeWidth:1,vectorEffect:'non-scaling-stroke'}})),
+      series.map(x=>CE('path',{key:x.id,d:x.mon.map((v,k)=>(k?'L':'M')+(k/11*600).toFixed(1)+' '+yv(v).toFixed(1)).join(' '),style:{fill:'none',stroke:x.color,strokeWidth:3,strokeLinejoin:'round',strokeLinecap:'round',vectorEffect:'non-scaling-stroke',transition:'d 300ms'}}))):null;
+    let cIns='';if(series.length){const best=series.slice().sort((a,b)=>b.sum-a.sum)[0],grow=series.filter(x=>x.ch!==null).sort((a,b)=>b.ch-a.ch)[0],tight=series.filter(x=>x.X.total<=0||(x.X.cover!==null&&x.X.cover<4)).sort((a,b)=>(a.X.cover||0)-(b.X.cover||0))[0];
+      cIns=best.it.tag+' sold the most ('+best.sum+' pairs in 12 months).'+(grow&&grow.ch>10&&grow!==best?' '+grow.it.tag+' is growing fastest ('+trTxt(grow.ch)+').':grow&&grow.ch>10?' It is also growing fastest ('+trTxt(grow.ch)+').':'')+(tight?' '+tight.it.tag+(tight.X.total<=0?' is sold out.':' has only '+coverWords(tight.X)+' of stock left at its current pace.'):' All of these have at least 4 weeks of stock.');}
+    const cmp={has:series.length>0,empty:!series.length,svg,insight:cIns,canAdd:series.length<5,
+      chips:series.map(x=>({tag:x.it.tag,color:x.color,remove:()=>this.setState({cmp:cmpIds.filter(i=>i!==x.id)})})),
+      addOpts:byS.filter(i=>!cmpIds.includes(i.id)).map(i=>({id:i.id,label:i.tag})),onAdd:e=>{const v=e.target.value;if(v&&cmpIds.length<5)this.setState({cmp:[...cmpIds,v]})},
+      top5:()=>this.setState({cmp:byS.slice(0,5).map(i=>i.id)}),
+      yTicks:[cmax,Math.round(cmax/2),0].map(v=>({v,top:(yv(v)/200*220+4)+'px'})),
+      rows:series.map(x=>({tag:x.it.tag,color:x.color,open:()=>this.openItem(x.id),cells:x.mon.map((v,k)=>{const p=Math.round(v/cmax*85);return{v:v||'–',title:MN(k)+': '+v+' pairs',bg:'color-mix(in oklch, '+x.color+' '+p+'%, var(--surface))',ink:p>50?(dark?'oklch(0.18 0 0)':'#fff'):'var(--ink)'}}),
+        total:x.sum,trend:trTxt(x.ch),trendColor:trCol(x.ch),stock:x.X.total,stockColor:x.X.total<=0?'var(--neg)':'var(--ink)',cover:x.X.coverTxt,coverColor:x.X.total<=0?'var(--neg)':x.X.cover!==null&&x.X.cover<4?'var(--warn)':'var(--muted)'}))};
+    const pinIds=s.pins.filter(id=>{const it=byId(id);return it&&!it.removed});
+    const pinData=pinIds.map(id=>{const it=byId(id),X=S[id],w=this.weekly(id),wk=w[7],lw=w[6],d=wk-lw,mxw=Math.max(1,...w);
+      const low=X.sizes.filter(z=>st(id,z)<=1&&(X.sz90[z]||0)>0),out=low.filter(z=>st(id,z)<=0);
+      const note=low.length?(out.length?'Sold out: size '+out.join(', ')+'. ':'')+(low.length>out.length?'Last pair: size '+low.filter(z=>!out.includes(z)).join(', ')+'.':''):'Every size that sells has stock.';
+      return{id,it,X,wk,lw,d,w,mxw,low,note}});
+    const pins={empty:!pinIds.length,canAdd:pinIds.length<6&&s.role!=='staff',btnInk:dark?'oklch(0.2 0.03 255)':'#fff',
+      addOpts:items.filter(i=>!pinIds.includes(i.id)).sort((a,b)=>a.tag.localeCompare(b.tag)).map(i=>({id:i.id,label:i.tag})),onAdd:e=>{const v=e.target.value;if(v)this.togglePin(v)},
+      cards:pinData.map(p=>({...CC(p.it.cat),tag:p.it.tag,cat:catName(p.it.cat),open:()=>this.openItem(p.id),unpin:()=>this.togglePin(p.id),wk:p.wk,
+        dTxt:p.d>0?'▲ '+p.d+' vs last week':p.d<0?'▼ '+(-p.d)+' vs last week':'same as last week',dColor:p.d>0?'var(--acc-text)':p.d<0?'var(--neg)':'var(--muted)',
+        stock:p.X.total,stockColor:p.X.total<=0?'var(--neg)':'var(--ink)',spark:p.w.map((v,k)=>({h:Math.round(v/p.mxw*56)+'px',op:k===7?1:.5,title:(k===7?'This week':(7-k)+' weeks ago')+': '+v+' pairs'})),
+        note:p.note,noteColor:p.low.length?'var(--warn)':'var(--muted)',hasLow:p.low.length>0,toIn:()=>this.addToIn(p.low.map(z=>({it:p.id,z}))),chart:()=>this.setState({trendId:p.id,page:'sales'})}))};
+    const pinSide={show:s.role!=='staff'&&!narrow&&!s.navCol&&pinIds.length>0,list:pinData.map(p=>({...CC(p.it.cat),tag:p.it.tag,open:()=>this.openItem(p.id),sub:p.wk+' sold this week · '+p.X.total+' left',subColor:p.X.total<=0||p.low.length?'var(--warn)':'var(--muted)'}))};
+    const nextHue=HUES.find(h=>!s.cats.some(c=>c.hue===h)),selHue=s.newCatHue==null?(nextHue==null?HUES[0]:nextHue):s.newCatHue;
+    const newCatCols=HUES.map(h=>{const c=dark?'oklch(0.74 0.13 '+h+')':'oklch(0.58 0.15 '+h+')';return{c,ring:h===selHue?'0 0 0 3px var(--surface), 0 0 0 5px '+c:'none',pick:()=>this.setState({newCatHue:h})}});
+    const AP=s.alarmPop;const am=AP?{open:true,title:AP.title,body:AP.body+(AP.list.length>12?' Showing 12 of '+AP.list.length+'.':''),list:AP.list.slice(0,12).map(a=>({tag:a.tag,z:a.z,thTxt:a.th===0?'0':a.th+' or less',vTxt:a.v<=0?(a.v<0?a.v+' left':'Sold out'):a.v+' left',color:a.v<=0?'var(--neg)':'var(--warn)'})),headBg:dark?'oklch(0.45 0.17 27)':'oklch(0.53 0.2 27)',close:()=>this.setState({alarmPop:null}),restock:()=>this.addToIn(AP.list.map(a=>({it:a.it,z:a.z})))}:{open:false};
+    // issues
+    const negs=[];items.forEach(it=>rg(it.from,it.to).forEach(z=>{const v=st(it.id,z);if(v<0)negs.push({tag:it.tag,size:z,v,open:()=>this.openItem(it.id)})}));
+    const LV={imp:['Important','var(--neg)','var(--neg-soft)'],chk:['Check','var(--warn)','var(--warn-soft)'],min:['Minor','var(--muted)','var(--sunk)']};
+    const cnt=k=>D.issues.filter(i=>i.lvl===k&&!s.iss[i.id]).length,doneN=Object.keys(s.iss).length;
+    const issTabs=[['imp','Important',cnt('imp'),'var(--neg)'],['chk','Check',cnt('chk'),'var(--warn)'],['min','Minor',cnt('min'),'var(--muted)'],['done','Done',doneN,'var(--acc)']].map(([k,l,n,dot])=>({label:l,n,dot,go:()=>this.setState({issTab:k,issShow:20}),bg:s.issTab===k?'var(--acc-soft)':'var(--surface)',border:s.issTab===k?'var(--acc)':'var(--line)'}));
+    const issAll=D.issues.filter(i=>s.issTab==='done'?!!s.iss[i.id]:i.lvl===s.issTab&&!s.iss[i.id]);
+    const setIss=(id,v,msg)=>{this.setState(x=>{const m={...x.iss};if(v)m[id]=v;else delete m[id];return{iss:m}});this.toast(msg,'ok',v?()=>this.setState(x=>{const m={...x.iss};delete m[id];return{iss:m}}):null)};
+    const issList=issAll.slice(0,s.issShow).map(i=>{const it=byId(i.it)||{tag:'Removed item'},v=s.iss[i.id];return{lvl:LV[i.lvl][0],lvlColor:LV[i.lvl][1],lvlBg:LV[i.lvl][2],type:i.type,tag:it.tag,open:()=>this.openItem(i.it),wrong:i.wrong,check:i.check,
+      done:!!v,open_:!v,doneTxt:v==='fixed'?'Marked fixed':'Marked as correct',op:v?.75:1,fix:()=>setIss(i.id,'fixed','Marked fixed · '+it.tag),ok:()=>setIss(i.id,'correct','Kept as correct · '+it.tag),reopen:()=>setIss(i.id,null,'Issue reopened')}});
+
+    // items page
+    const allCats={select:()=>this.setState({itemCat:'all'}),bg:s.itemCat==='all'?'var(--acc-soft)':'transparent',fw:s.itemCat==='all'?700:500,count:items.length};
+    const catRows=s.cats.map((c,i)=>{const on=s.itemCat===c.id,ed=s.catEdit&&s.catEdit.id===c.id;return{...CC(c.id),cycle:()=>this.cycleCat(c.id),name:c.name,count:items.filter(x=>x.cat===c.id).length,bg:on?'var(--acc-soft)':'transparent',fw:on?700:500,select:()=>this.setState({itemCat:c.id}),up:()=>this.moveCat(i,-1),down:()=>this.moveCat(i,1),
+      editing:ed,notEditing:!ed,editVal:ed?s.catEdit.name:'',onEdit:e=>this.setState({catEdit:{id:c.id,name:e.target.value}}),onEditKey:e=>{if(e.key==='Enter')this.commitCat();if(e.key==='Escape')this.setState({catEdit:null})},commit:()=>this.commitCat(),
+      rename:()=>this.setState({catEdit:{id:c.id,name:c.name}}),del:()=>{const other=s.cats.find(x=>x.id!==c.id);if(!other)return this.toast('Keep at least one category.','err');this.setState({modal:{kind:'delCat',id:c.id,to:(s.cats.find(x=>x.id==='unc'&&x.id!==c.id)||other).id}})}}});
+    const itemList=items.filter(i=>s.itemCat==='all'||i.cat===s.itemCat).sort((a,b)=>a.tag.localeCompare(b.tag));
+    const itemRows=itemList.map(i=>({tag:i.tag,sub:i.colour+' · '+i.brand,cat:catName(i.cat),range:SYS[i.sys].short+' '+i.from+'–'+i.to,stock:S[i.id].total,...CC(i.cat),edit:()=>this.openEdit(i),...(()=>{const th=this.alarmTh(i),on=th!==null;return{alTxt:on?'On · at '+th+(th?' or less':''):'Off',alTitle:on?'Click to turn the alarm off':'Click to turn on a low-stock alarm',alToggle:()=>this.setItemAlarm(i.id,!on,on?th:2),alBg:on?'var(--neg-soft)':'transparent',alInk:on?'var(--neg)':'var(--muted)',alBorder:on?'var(--neg)':'var(--line)',alDot:on?'var(--neg)':'var(--line)'}})()}));
+
+    // drawer
+    if(s.drawer)this.lastDr={drawer:s.drawer,edit:s.edit};
+    const ld=this.lastDr||{drawer:{kind:'none'}},dk=ld.drawer.kind;
+    const dw={backOp:s.drawer?1:0,backPe:s.drawer?'auto':'none',tf:s.drawer?'translateX(0)':'translateX(calc(100% + 80px))',shadow:s.drawer?'-24px 0 60px rgba(0,0,0,.18)':'none',w:narrow?'100vw':'600px',trans:s.rm?'none':'transform 280ms cubic-bezier(.2,.8,.2,1)',isItem:dk==='item',isEdit:dk==='edit',isAlarms:dk==='alarms'};
+    let dr={};const dIt=dk==='item'?byId(ld.drawer.id):null;
+    if(dIt){const X=S[dIt.id],sizes=rg(dIt.from,dIt.to);
+      const hot=sizes.filter(z=>(X.sz90[z]||0)>=2&&st(dIt.id,z)<=1);
+      const cw=X.cover===null?'':X.cover<1?'less than a week':'about '+Math.round(X.cover)+' weeks';
+      const insight=X.s90===0?'No sales in the last 3 months. '+X.total+' pairs are sitting on the shelf. Consider a promotion or moving them to the front.':'Sells about '+f1(X.wk)+' pairs a week. '+(X.total<=0?'There is no stock left, so every sale now is a lost sale.':'At that pace, current stock lasts '+cw+'.')+(hot.length?' Size'+(hot.length>1?'s ':' ')+hot.join(', ')+(hot.length>1?' sell well but are':' sells well but is')+' nearly out. Restock these first.':'');
+      const a=s.act,grid=a&&a!=='ex'?sizes.map(z=>{const now=st(dIt.id,z),raw=s.inp[z],n=parseInt(raw);let after=now;if(raw!==undefined&&raw!==''&&!isNaN(n))after=a==='count'?n:a==='sale'?now-n:now+n;return{s:z,now,val:raw||'',aria:'Size '+z,on:e=>{const v=e.target.value;this.setState(x=>({inp:{...x.inp,[z]:v}}))},after,afterColor:after<0?'var(--neg)':after!==now?'var(--acc-text)':'var(--muted)'}}):[];
+      const AT={sale:['Record a sale','Type pairs sold under each size.','Sold now','Save sale','Receipt no. (optional)'],in:['Record stock in','Type pairs received under each size.','Received','Save stock in','Supplier / invoice no.'],ret:['Customer return','Type pairs brought back. They go back into stock.','Returned','Save return','Reason (optional)'],count:['Stock count','Type what you counted on the shelf. The app records the difference.','Counted','Save count','Who counted (optional)'],ex:['Size exchange','Customer swapped one pair for another size.','','Save exchange','Receipt no. (optional)']}[a]||[];
+      const appH=[];s.entries.forEach(e=>{const ls=e.lines.filter(l=>l.it===dIt.id);if(ls.length)appH.push({d:e.d,t:e.type,lines:ls,note:e.note,mine:true,id:e.id})});
+      const sh=(D.hist[dIt.id]||[]).slice().reverse(),shown=appH.concat(sh.slice(0,18)),open=sh[sh.length-1];if(open&&open.t==='open'&&!shown.includes(open))shown.push(open);
+      const mo=X.mon,mmax=Math.max(1,...mo);
+      const dth=this.alarmTh(dIt),don=dth!==null,dex=s.alarms.items[dIt.id];
+      const alDr={...sw(don,()=>this.setItemAlarm(dIt.id,!don,don?dth:2)),src:dex?(dex.on?'Set for this shoe. Pop-up when any size drops to '+(dex.th===0?'0':dex.th+' or less')+'.':'Turned off for this shoe.'):don?'On from the '+catName(dIt.cat)+' category alarm.':'Off. No pop-ups for this shoe.',th:String(don?dth:2),onTh:e=>this.setItemAlarm(dIt.id,true,+e.target.value,true),off:!don,op:don?1:.5,bg:don?'var(--neg-soft)':'var(--surface)',border:don?'var(--neg)':'var(--line)'};
+      const drP=s.pins.includes(dIt.id);
+      dr={al:alDr,cc:CC(dIt.cat).cc,pin:()=>this.togglePin(dIt.id),pinTxt:drP?'Pinned':'Pin',pinBg:drP?'var(--acc)':'var(--surface)',pinInk:drP?'var(--acc-ink)':'var(--ink)',pinBorder:drP?'var(--acc)':'var(--line)',tag:dIt.tag,code:dIt.code,cat:catName(dIt.cat),sub:dIt.colour+' · '+dIt.details+(dIt.note?' · Note: '+dIt.note:''),edit:()=>this.openEdit(dIt),insight,insightBg:hot.length||X.total<=0||(X.cover!==null&&X.cover<4)?'var(--warn-soft)':'var(--sunk)',
+        tiles:sizes.map(z=>{const v=st(dIt.id,z),sd=X.sz30[z]||0;return{s:z,v,title:'Size '+z+': '+v+' in stock, '+sd+' sold in 30 days',sold:sd?'sold '+sd:'no sales',bg:v<0?'var(--neg-soft)':v===0?'var(--sunk)':v===1?'var(--warn-soft)':'var(--surface)',color:v<0?'var(--neg)':v===0?'var(--muted)':v===1?'var(--warn)':'var(--ink)',border:v<0?'var(--neg)':v===1?'var(--warn)':'var(--line)'}}),
+        totals:[{l:'In stock',v:X.total+' pairs'},{l:'Sold, 30 days',v:X.s30},{l:'Sold, 12 months',v:X.s365},{l:'Last sale',v:X.last===null?'None':X.last===0?'Today':fmt(X.last,true)}],
+        btnInk:dark?'oklch(0.2 0.02 200)':'#fff',saleRing:a==='sale'?'0 0 0 3px var(--surface), 0 0 0 5px var(--c-sale)':'none',inRing:a==='in'?'0 0 0 3px var(--surface), 0 0 0 5px var(--c-in)':'none',
+        doSale:()=>this.startAct('sale'),doIn:()=>this.startAct('in'),doRet:()=>this.startAct('ret'),doCount:()=>this.startAct('count'),doEx:()=>this.startAct('ex'),cancel:()=>this.setState({act:null}),
+        hasAct:!!a,isGrid:!!a&&a!=='ex',isEx:a==='ex',actTitle:AT[0],actHelp:AT[1],inLabel:AT[2],saveLabel:AT[3],notePh:AT[4],grid,note:s.actNote,onNote:e=>this.setState({actNote:e.target.value}),saveAct:()=>this.saveAct(dIt,st),
+        exOpts:sizes.map(z=>({v:String(z),label:'Size '+z+' ('+st(dIt.id,z)+' left)'})),exFrom:s.ex.from,exTo:s.ex.to,onExFrom:e=>this.setState({ex:{...s.ex,from:e.target.value}}),onExTo:e=>this.setState({ex:{...s.ex,to:e.target.value}}),
+        chart:mo.map((v,k)=>{const m=MON[(TODAY.getMonth()-11+k+24)%12];return{v:v||'',m:m.slice(0,1),title:m+': '+v+' pairs',h:Math.round(v/mmax*100)+'%',op:k===11?.55:1}}),
+        histNote:'Latest '+Math.min(shown.length,20+appH.length)+' of '+(sh.length+appH.length)+' since Sep 2020',
+        hist:shown.map(e=>{const q=e.lines.reduce((x,l)=>x+l.q,0);return{date:e.d===0?'Today':fmt(e.d,true),label:LBL[e.t],sizes:e.lines.map(l=>l.sz+'×'+Math.abs(l.q)).join('  '),note:e.note,hasNote:!!e.note,flag:!!e.flag,flagTxt:e.flag||'',mine:!!e.mine,undo:()=>this.undo(e.id),q:(q>0?'+':q<0?'−':'±')+Math.abs(q),qColor:q<0?'var(--ink)':'var(--acc-text)',bg:e.mine?'var(--acc-soft)':'transparent'}})};
+    }
+    let ed={};const E=dk==='edit'?(s.edit||ld.edit):null;
+    if(E){const mk=f=>e=>this.setEd({[f]:e.target.value});
+      ed={eyebrow:E.id?'Edit item':'New item',title:E.id?E.tag||'Untitled':'Add an item',tag:E.tag,cat:E.cat,colour:E.colour,brand:E.brand,details:E.details,note:E.note,sys:E.sys,from:String(E.from),to:String(E.to),
+        onTag:mk('tag'),onCat:mk('cat'),onColour:mk('colour'),onBrand:mk('brand'),onDetails:mk('details'),onNote:mk('note'),
+        onSys:e=>{const k=e.target.value,z=SYS[k].sizes;this.setEd({sys:k,from:z[0],to:z[z.length-1]})},onFrom:e=>this.setEd({from:+e.target.value}),onTo:e=>this.setEd({to:+e.target.value}),
+        sizeOpts:SYS[E.sys].sizes.map(String),
+        presets:PRESETS.map(p=>{const on=E.sys===p[1]&&+E.from===p[2]&&+E.to===p[3];return{label:p[0],go:()=>this.setEd({sys:p[1],from:p[2],to:p[3]}),bg:on?'var(--acc)':'transparent',ink:on?'var(--acc-ink)':'var(--ink)',border:on?'var(--acc)':'var(--line)'}}),
+        al:sw(!!E.alOn,()=>this.setEd({alOn:!E.alOn,alTouched:true})),alTh:String(E.alTh==null?2:E.alTh),onAlTh:e=>this.setEd({alTh:+e.target.value,alTouched:true,alOn:true}),alOff:!E.alOn,alOp:E.alOn?1:.5,alSrc:E.id?(E.alOn?'Pop-up when any size drops to the level you pick.':'Off. No pop-ups for this shoe.'):'Off by default for new shoes. Turn on to get a pop-up when a size runs low.',hasErr:!!E.err,err:E.err,canRemove:!!E.id,remove:()=>this.setState({modal:{kind:'removeItem',id:E.id}}),save:()=>this.saveEdit(),saveLabel:E.id?'Save item':'Add item'};
+    }
+    let md={open:false};
+    if(s.modal){const m=s.modal;
+      if(m.kind==='removeItem'){const it=byId(m.id)||{};md={open:true,title:'Remove '+it.tag+'?',body:'It will disappear from the stock list and the sale form. Its past sales and deliveries stay in your reports. You can undo straight after.',confirmLabel:'Remove item',showMove:false}}
+      if(m.kind==='delCat'){const c=s.cats.find(x=>x.id===m.id)||{},n=items.filter(i=>i.cat===m.id).length;md={open:true,title:'Delete "'+c.name+'"?',body:n?'This category has '+n+' item'+(n>1?'s':'')+'. Choose where to move '+(n>1?'them':'it')+'. No sales or stock are lost.':'This category is empty. Nothing else changes.',showMove:n>0,moveOpts:s.cats.filter(x=>x.id!==m.id),moveVal:m.to,onMove:e=>this.setState({modal:{...m,to:e.target.value}}),confirmLabel:'Delete category'}}
+      md.cancel=()=>this.setState({modal:null});md.confirm=()=>this.confirmModal();
+    }
+    const toasts=s.toasts.map(t=>({msg:t.msg,dot:t.kind==='err'||t.kind==='warn'?'oklch(0.68 0.19 27)':t.kind==='info'?'oklch(0.75 0.02 260)':'var(--acc)',hasUndo:!!t.undo,undo:()=>{t.undo();this.setState(x=>({toasts:x.toasts.filter(y=>y.id!==t.id)}))},close:()=>this.setState(x=>({toasts:x.toasts.filter(y=>y.id!==t.id)}))}));
+
+    return{rootRef:el=>{this.root=el;if(el)this.applyVars()},L,hb,readOnly:!!this.props.readOnly,showInsights:this.props.showInsights!==false,
+      summary:items.length+' items · '+n0(totalPairs)+' pairs in stock',nav,
+      themeBtn:{lightBg:dark?'transparent':'var(--surface)',darkBg:dark?'var(--surface)':'transparent'},setLight:()=>this.setState({theme:'light'}),setDark:()=>this.setState({theme:'dark'}),
+      showLogin:!s.role,isAdmin:s.role==='admin',isStaffSales:s.role==='staff'&&s.page==='sales',canEdit:s.role!=='staff',
+      me:s.role?this.ACC[s.role]:{name:'',title:''},signOut:()=>this.setState({role:null,page:'sale',drawer:null,act:null,alarmPop:null}),
+      lg:(()=>{const g=s.lg,ad=g.role==='admin',on={bg:'var(--surface)',fw:700,sh:'0 1px 3px rgba(0,0,0,.12)'},off={bg:'transparent',fw:500,sh:'none'},A=ad?on:off,B=ad?off:on,acc=this.ACC[g.role];
+        return{adminBg:A.bg,adminFw:A.fw,adminSh:A.sh,staffBg:B.bg,staffFw:B.fw,staffSh:B.sh,u:g.u,p:g.p,err:g.err,hasErr:!!g.err,
+          note:ad?'Full access: stock, items, categories, alarms and sales insights.':'Record new sales and stock in.',
+          uPh:'Your username',btn:'Sign in',demo:'hafiz / 1234 (admin) · aina / 0000 (user)',
+          pickAdmin:()=>this.setState({lg:{role:'admin',u:'',p:'',err:''}}),pickStaff:()=>this.setState({lg:{role:'staff',u:'',p:'',err:''}}),
+          onU:e=>this.setState({lg:{...g,u:e.target.value,err:''}}),onP:e=>this.setState({lg:{...g,p:e.target.value.replace(/\D/g,'').slice(0,4),err:''}}),
+          onKey:e=>{if(e.key==='Enter')this.signIn()},submit:()=>this.signIn(),fillAdmin:()=>this.setState({lg:{...g,u:'hafiz',p:'1234',err:''}}),fillUser:()=>this.setState({lg:{...g,u:'aina',p:'0000',err:''}})}})(),
+      P:{sale:s.page==='sale',stock:s.page==='stock'&&s.role!=='staff',items:s.page==='items',sales:s.page==='sales',issues:s.page==='issues'},
+      home,lines,setSale:()=>this.setState({mode:'sale'},()=>this.focusLine(this.state.lines[0].id)),setIn:()=>this.setState({mode:'in'},()=>this.focusLine(this.state.lines[0].id)),
+      addLine:()=>this.addLine(),save:()=>this.save(),date:s.date,onDate:e=>this.setState({date:e.target.value}),note:s.note,onNote:e=>this.setState({note:e.target.value}),
+      today:{sold:tSold,recv:tRecv},heads:{has:heads.length>0,list:heads.slice(0,4),what:isSale?'sale':'delivery'},restockShort:restockAll.slice(0,5).map(mkR),
+      goStock:()=>this.setPage('stock'),goAddItem:e=>{e&&e.preventDefault&&e.preventDefault();this.setState({page:'stock'},()=>this.openEdit(null))},
+      q:s.q,onQ:e=>this.setState({q:e.target.value}),onQKey:e=>{if(e.key==='Enter'&&sq[0])this.openItem(sq[0].id)},searchRef:el=>{this.el.search=el},
+      cat:s.cat,onCat:e=>this.setState({cat:e.target.value}),catOpts:s.cats,sort:s.sort,onSort:e=>this.setState({sort:e.target.value}),hide:s.hide,onHide:e=>this.setState({hide:e.target.checked}),
+      stockCount:sq.length+' of '+items.length+' items',stockEmpty:!sq.length&&filtering,groups,removed,addCatOpen:s.addCatOpen,toggleAddCat:()=>this.setState({addCatOpen:!s.addCatOpen}),newItemStock:()=>this.openEdit(null),health,
+      csvStock:()=>{const rows=[['Item','Code','Colour','Details','Category','Size system','Size','Pairs in stock']];items.forEach(i=>rg(i.from,i.to).forEach(z=>rows.push([i.tag,i.code,i.colour,i.details,catName(i.cat),SYS[i.sys].short,z,st(i.id,z)])));this.csv('stock-list.csv',rows)},
+      periods,tiles,ranked,salesEmpty:!rk.length,restockSales,restockNone:!restockSales.length,catSales,periodLabel:PL[s.period],slowNote:n0(slowPairs)+' pairs tied up. Consider a promotion before ordering more.',
+      csvSales:()=>{const rows=[['Date','Item','Action','Size','Pairs','Note']];items.forEach(i=>(D.hist[i.id]||[]).forEach(e=>e.lines.forEach(l=>rows.push([ago(e.d).toISOString().slice(0,10),i.tag,LBL[e.t],l.sz,l.q,e.note||'']))));s.entries.forEach(e=>e.lines.forEach(l=>rows.push([ago(e.d).toISOString().slice(0,10),(byId(l.it)||{}).tag,LBL[e.type],l.sz,l.q,e.note])));this.csv('sales-and-deliveries.csv',rows)},
+      negs,negNone:!negs.length,issTabs,issList,issEmpty:!issAll.length,issMore:issAll.length>s.issShow,issMoreTxt:'Show more ('+(issAll.length-s.issShow)+' left)',showMoreIss:()=>this.setState({issShow:s.issShow+20}),
+      issProg:{done:doneN,w:(doneN/149*100).toFixed(1)+'%'},
+      allCats,catRows,newCat:s.newCat,onNewCat:e=>this.setState({newCat:e.target.value}),onNewCatKey:e=>{if(e.key==='Enter')this.addCat()},addCat:()=>this.addCat(),
+      itemRows,itemsTitle:s.itemCat==='all'?'All items':catName(s.itemCat),itemsMeta:itemRows.length+' items',newItem:()=>this.openEdit(null),
+      dw,dr,ed,md,al,am,tr,cmp,months,thOpts:THO,pins,pinSide,newCatCols,toggleNav:()=>this.setState({navCol:!s.navCol}),itemsCc:s.itemCat==='all'?'var(--acc)':CC(s.itemCat).cc,stop:e=>e.stopPropagation(),closeDrawer:()=>this.closeDrawer(),toasts};
+  }
+  alarmTh(it){if(!it)return null;const A=this.state.alarms,a=A.items[it.id];if(a)return a.on?a.th:null;const c=A.cats[it.cat];return c&&c.on?c.th:null}
+  alarmCheck(lines){const m={},out=[],seen={};lines.forEach(l=>{const k=l.it+'|'+l.sz;m[k]=(m[k]||0)+l.q});lines.forEach(l=>{const k=l.it+'|'+l.sz;if(seen[k]||m[k]>=0)return;seen[k]=1;const it=this.state.items.find(i=>i.id===l.it),th=this.alarmTh(it);if(th===null)return;const v=this.st(l.it,l.sz)+m[k];if(v<=th)out.push({it:it.id,tag:it.tag,z:l.sz,v,th})});return out}
+  popFor(al){if(!al.length)return null;return{title:al.length===1?al[0].tag+' size '+al[0].z+(al[0].v<=0?' is sold out':' is running low'):al.length+' sizes are running low',body:'This took them to or below your alarm level. Restock soon so you do not miss sales.',list:al}}
+  alarmNow(ids){const list=[];ids.forEach(id=>{const it=this.state.items.find(i=>i.id===id);if(!it||it.removed)return;const th=this.alarmTh(it);if(th===null)return;rg(it.from,it.to).forEach(z=>{const v=this.st(id,z);if(v<=th)list.push({it:id,tag:it.tag,z,v,th})})});
+    if(list.length)this.setState({alarmPop:{title:'Alarm on · '+list.length+' size'+(list.length>1?'s are':' is')+' already low',body:'These sizes are at or below your alarm level right now.',list}});else this.toast('Alarm on · you will get a pop-up when a size drops to the alarm level','ok')}
+  setItemAlarm(id,on,th,quiet){const it=this.state.items.find(i=>i.id===id);this.setState(s=>({alarms:{...s.alarms,items:{...s.alarms.items,[id]:{...(s.alarms.items[id]||{}),on,th}}}}),()=>{if(quiet)return;if(on)this.alarmNow([id]);else this.toast('Alarm off · '+it.tag,'info')})}
+  setCatAlarm(cid,on,th,quiet){const c=this.state.cats.find(x=>x.id===cid);this.setState(s=>({alarms:{...s.alarms,cats:{...s.alarms.cats,[cid]:{on,th}}}}),()=>{if(quiet)return;if(on)this.alarmNow(this.state.items.filter(i=>i.cat===cid&&!this.state.alarms.items[i.id]).map(i=>i.id));else this.toast('Alarm off · '+c.name,'info')})}
+  togglePin(id){if(this.state.role==='staff')return;const it=this.state.items.find(i=>i.id===id);if(!it)return;if(this.state.pins.includes(id)){this.setState(s=>({pins:s.pins.filter(x=>x!==id)}));this.toast('Unpinned · '+it.tag,'info')}else{if(this.state.pins.length>=6)return this.toast('You can pin up to 6 shoes. Unpin one first.','err');this.setState(s=>({pins:[...s.pins,id]}));this.toast('Pinned · '+it.tag+' · now at the top of Sales and in the sidebar','ok')}}
+  weekly(id){const w=Array(8).fill(0);(this.D.hist[id]||[]).forEach(e=>{if(e.t!=='sold'||e.d>=56)return;w[7-Math.floor(e.d/7)]-=e.lines.reduce((a,l)=>a+l.q,0)});this.state.entries.forEach(e=>{if(e.type!=='sold'||e.d>=56)return;e.lines.forEach(l=>{if(l.it===id)w[7-Math.floor(e.d/7)]-=l.q})});return w}
+  cycleCat(id){this.setState(s=>({cats:s.cats.map(c=>{if(c.id!==id)return c;const i=c.hue==null?-1:HUES.indexOf(c.hue);return{...c,hue:HUES[(i+1)%HUES.length]}})}))}
+  removeItemAlarm(id){const it=this.state.items.find(i=>i.id===id);this.setState(s=>{const m={...s.alarms.items};delete m[id];return{alarms:{...s.alarms,items:m}}});this.toast('Shoe alarm removed · '+it.tag,'info')}
+  addShoeAlarm(){const a=this.state.alAdd,th=parseInt(a.th);if(!a.id)return this.toast('Choose a shoe first.','err');if(isNaN(th)||th<0)return this.toast('Type how many pairs counts as low, e.g. 2.','err');
+    const id=a.id;this.setState(s=>({alarms:{...s.alarms,items:{...s.alarms.items,[id]:{on:true,th,why:a.why.trim()}}},alAdd:{id:'',th:'2',why:''}}),()=>this.alarmNow([id]))}
+  openAlarms(){this.setState({drawer:{kind:'alarms'},act:null})}
+  addToIn(list){const seen={},nls=[];list.forEach(x=>{const k=x.it+'|'+x.z;if(seen[k])return;seen[k]=1;const it=this.state.items.find(i=>i.id===x.it);if(it)nls.push({id:this.lid++,q:it.tag,it:it.id,size:String(x.z),pairs:''})});if(!nls.length)return;
+    this.setState(s=>({page:'sale',mode:'in',drawer:null,act:null,alarmPop:null,lines:[...s.lines.filter(l=>l.q||l.it),...nls]}),()=>{const e=this.el['p'+nls[0].id];e&&e.focus()});
+    this.toast('Switched to Stock in · '+nls.length+' line'+(nls.length>1?'s':'')+' added. Type the pairs received.','info')}
+  restockLine(it){
+    const X=this.stat(it,(id,sz)=>((this.D.base[id]||{})[sz]||0)+(this.deltas()[id+'|'+sz]||0));
+    const z=X.sizes.slice().sort((a,b)=>(X.sz90[b]||0)-(X.sz90[a]||0))[0];
+    const nl={id:this.lid++,q:it.tag,it:it.id,size:String(z),pairs:''};
+    this.setState(s=>{const keep=s.lines.filter(l=>l.q||l.it);return{mode:'in',lines:[...keep,nl]}},()=>{const e=this.el['p'+nl.id];e&&e.focus()});
+    this.toast('Switched to Stock in · '+it.tag+' added, size '+z+' sells most','info');
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+/* Tokens are set on :root by theme.ts (pal). Registering them lets page/theme switches fade. */
+@property --bg{syntax:'<color>';inherits:true;initial-value:oklch(0.975 0.005 85)}
+@property --surface{syntax:'<color>';inherits:true;initial-value:oklch(0.997 0.002 85)}
+@property --sunk{syntax:'<color>';inherits:true;initial-value:oklch(0.955 0.006 85)}
+@property --ink{syntax:'<color>';inherits:true;initial-value:oklch(0.24 0.012 60)}
+@property --muted{syntax:'<color>';inherits:true;initial-value:oklch(0.5 0.012 60)}
+@property --line{syntax:'<color>';inherits:true;initial-value:oklch(0.9 0.007 85)}
+@property --acc{syntax:'<color>';inherits:true;initial-value:oklch(0.5 0.15 150)}
+@property --acc-ink{syntax:'<color>';inherits:true;initial-value:oklch(1 0 0)}
+@property --acc-soft{syntax:'<color>';inherits:true;initial-value:oklch(0.955 0.033 150)}
+@property --acc-text{syntax:'<color>';inherits:true;initial-value:oklch(0.45 0.15 150)}
+@property --acc-line{syntax:'<color>';inherits:true;initial-value:oklch(0.86 0.06 150)}
+@property --neg{syntax:'<color>';inherits:true;initial-value:oklch(0.53 0.2 27)}
+@property --neg-soft{syntax:'<color>';inherits:true;initial-value:oklch(0.95 0.035 27)}
+@property --warn{syntax:'<color>';inherits:true;initial-value:oklch(0.55 0.15 50)}
+@property --warn-soft{syntax:'<color>';inherits:true;initial-value:oklch(0.95 0.06 85)}
+
+:root{color-scheme:light;transition:--bg 240ms ease,--surface 240ms ease,--sunk 240ms ease,--ink 240ms ease,--muted 240ms ease,--line 240ms ease,--acc 240ms ease,--acc-ink 240ms ease,--acc-soft 240ms ease,--acc-text 240ms ease,--acc-line 240ms ease,--neg 240ms ease,--neg-soft 240ms ease,--warn 240ms ease,--warn-soft 240ms ease}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:14px;line-height:1.45;font-variant-numeric:tabular-nums}
+a{color:var(--acc-text);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+a:hover{color:var(--ink)}
+input,select,button,textarea{font:inherit;color:inherit}
+button{background:transparent}
+input[type=number]::-webkit-inner-spin-button{opacity:.4}
+button:disabled{cursor:not-allowed!important;opacity:.6}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*,:root{transition:none!important;animation:none!important}}
+
+/* layout bits */
+.col{display:flex;flex-direction:column}
+.muted{color:var(--muted)}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px}
+.eyebrow{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.lbl{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--muted)}
+.inp{height:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);outline:none}
+.inp:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
+.page-head{position:relative;background:var(--acc-soft);color:var(--ink);border-bottom:1px solid var(--acc-line);padding:28px 32px 22px}
+.topbar{position:absolute;left:0;right:0;top:0;height:4px;background:var(--acc)}
+.page-body{padding:26px 32px 60px}
+.side{flex:1 1 280px;max-width:340px;display:flex;flex-direction:column;gap:16px}
+.sticky{position:sticky;top:16px}
+@media (max-width:859px){
+  .page-head{padding:22px 16px 18px}
+  .page-body{padding:18px 16px 60px}
+  .side{max-width:100%}
+  .sticky{position:static}
+}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;flex-shrink:0;height:40px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);font-weight:600;cursor:pointer}
+.btn:hover{background:var(--sunk)}
+.btn-acc{border:0;background:var(--acc);color:var(--acc-ink);font-weight:700}
+.btn-acc:hover{background:var(--acc);filter:brightness(1.08)}
+.btn-neg{border:0;background:var(--neg);color:#fff;font-weight:700}
+.btn-neg:hover{background:var(--neg);filter:brightness(1.08)}
+.x{width:36px;height:36px;border:0;border-radius:8px;background:transparent;font-size:22px;cursor:pointer;flex:0 0 auto;padding:0}
+.x:hover{background:var(--surface)}
+.icon-btn{width:34px;height:38px;border:0;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;flex:0 0 auto}
+.icon-btn:hover{background:var(--surface);color:var(--ink)}
+.row-btn{text-align:left;border:0;background:transparent;padding:0;cursor:pointer;color:var(--ink)}
+.hov:hover{background:var(--sunk)!important}
+.hov-acc:hover{color:var(--acc-text)!important}
+.hov-neg:hover{background:var(--neg-soft)!important;color:var(--neg)!important;border-color:var(--neg)!important}
+.hov-bright:hover{filter:brightness(1.08)}
+.switch{flex:0 0 auto;width:46px;height:28px;border:0;border-radius:14px;position:relative;cursor:pointer;transition:background 200ms;padding:0}
+.switch span{position:absolute;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left 200ms}
