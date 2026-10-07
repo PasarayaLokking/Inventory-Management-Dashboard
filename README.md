@@ -80,7 +80,7 @@ The import refuses to run twice, so the stock can't be doubled by accident. Sale
 npx wrangler login        # once; opens the browser
 npm run deploy            # builds with the values in .env, then uploads
 ```
-Wrangler prints the address, e.g. `https://kasut-stock-card.<your-name>.workers.dev`. Bookmark it on every shop device. To publish changes later, run `npm run deploy` again.
+Wrangler prints the address, e.g. `https://inventory-stock-management.<your-name>.workers.dev`. Bookmark it on every shop device. To publish changes later, run `npm run deploy` again.
 
 ## Looking after it
 - **Pausing:** Supabase pauses free projects after 7 days with no use. Daily shop use prevents that. If it ever pauses, press **Restore** in the Supabase dashboard.
