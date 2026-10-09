@@ -10,7 +10,8 @@ export function EditItem({ item, catId }: { item: Item | null; catId?: string })
   const fallbackCat = catId ?? d.cats.find(c => c.name === 'Uncategorised')?.id ?? d.cats[0]?.id ?? ''
   const [f, setF] = useState(() => ({
     tag: item?.tag ?? '', category_id: item?.category_id ?? fallbackCat, colour: item?.colour ?? '', brand: item?.brand ?? '', details: item?.details ?? '', note: item?.note ?? '',
-    size_system: item?.size_system ?? ('UK' as Sys), size_from: item?.size_from ?? 4, size_to: item?.size_to ?? 12,
+    // sizes are typed, so they stay text until saved
+    size_system: item?.size_system ?? ('UK' as Sys), size_from: String(item?.size_from ?? 4), size_to: String(item?.size_to ?? 12),
   }))
   const th0 = item ? alarmTh(item, d.cats) : null
   const [al, setAl] = useState({ on: th0 !== null, th: th0 ?? 2, touched: false })
@@ -24,15 +25,17 @@ export function EditItem({ item, catId }: { item: Item | null; catId?: string })
   async function save() {
     const tag = f.tag.trim()
     if (!tag) return setErr('Give the item a name or model number, for example "Line 7 2146".')
-    if (f.size_from > f.size_to) return setErr('The first size must be smaller than the last size.')
+    const a = Number(f.size_from), b = Number(f.size_to)
+    if (!f.size_from.trim() || !f.size_to.trim() || !Number.isInteger(a) || !Number.isInteger(b) || a < 0 || b > 60) return setErr('Type the first and last size as whole numbers, for example 1 to 14.')
+    if (a > b) return setErr('The first size must be smaller than the last size.')
     if (d.live.some(i => i.id !== item?.id && norm(i.tag) === norm(tag))) return setErr('There is already an item called "' + tag + '". Use a different name.')
     if (item) {
       // pairs in a size you drop would silently vanish from the totals
-      const stranded = rg(item.size_from, item.size_to).filter(z => (z < f.size_from || z > f.size_to) && d.st(item.id, z) !== 0)
+      const stranded = rg(item.size_from, item.size_to).filter(z => (z < a || z > b) && d.st(item.id, z) !== 0)
       if (stranded.length) return setErr('Size ' + stranded.join(', ') + ' still has stock. Record a stock count of 0 for ' + (stranded.length > 1 ? 'those sizes' : 'that size') + ' first, or keep it in the range.')
     }
     const alarm: Partial<Pick<Item, 'alarm_on' | 'alarm_th'>> = item ? (al.touched ? { alarm_on: al.on, alarm_th: al.th } : {}) : { alarm_on: al.on ? true : null, alarm_th: al.on ? al.th : null }
-    const row = { ...f, tag, ...alarm }
+    const row = { ...f, tag, size_from: a, size_to: b, ...alarm }
     setBusy(true)
     const q = item ? supabase.from('items').update(row).eq('id', item.id) : supabase.from('items').insert(row)
     const { error } = await q
@@ -43,7 +46,6 @@ export function EditItem({ item, catId }: { item: Item | null; catId?: string })
     else { ui.closeDrawer(); ui.toast('Item added · ' + tag + ' · low-stock alarm ' + (al.on ? 'on' : 'off')) }
   }
 
-  const sizeOpts = SYS[f.size_system].sizes
   const sel = { height: 40, padding: '0 10px', borderRadius: 8 }
   return (
     <>
@@ -69,17 +71,18 @@ export function EditItem({ item, catId }: { item: Item | null; catId?: string })
           <div className="muted" style={{ fontSize: 12, fontWeight: 600 }}>Sizes</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {PRESETS.map(([label, sys, a, b]) => {
-              const on = f.size_system === sys && f.size_from === a && f.size_to === b
-              return <button key={label} onClick={() => set({ size_system: sys, size_from: a, size_to: b })} aria-pressed={on} style={{ whiteSpace: 'nowrap', height: 34, padding: '0 12px', border: '1px solid ' + (on ? 'var(--acc)' : 'var(--line)'), borderRadius: 999, background: on ? 'var(--acc)' : 'transparent', color: on ? 'var(--acc-ink)' : 'var(--ink)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{label}</button>
+              const on = f.size_system === sys && f.size_from === String(a) && f.size_to === String(b)
+              return <button key={label} onClick={() => set({ size_system: sys, size_from: String(a), size_to: String(b) })} aria-pressed={on} style={{ whiteSpace: 'nowrap', height: 34, padding: '0 12px', border: '1px solid ' + (on ? 'var(--acc)' : 'var(--line)'), borderRadius: 999, background: on ? 'var(--acc)' : 'transparent', color: on ? 'var(--acc-ink)' : 'var(--ink)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>{label}</button>
             })}
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            <select className="inp" value={f.size_system} onChange={e => { const k = e.target.value as Sys, z = SYS[k].sizes; set({ size_system: k, size_from: z[0], size_to: z[z.length - 1] }) }} aria-label="Size system" style={sel}>
+            <select className="inp" value={f.size_system} onChange={e => { const k = e.target.value as Sys, z = SYS[k].sizes; set({ size_system: k, size_from: String(z[0]), size_to: String(z[z.length - 1]) }) }} aria-label="Size system" style={sel}>
               <option value="UK">UK</option><option value="EU">EU</option><option value="CAP">Capal</option>
             </select>
-            <select className="inp" value={f.size_from} onChange={e => set({ size_from: +e.target.value })} aria-label="From size" style={sel}>{sizeOpts.map(z => <option key={z} value={z}>{z}</option>)}</select>
+            <input className="inp" type="number" min={0} max={60} step={1} inputMode="numeric" value={f.size_from} onChange={e => set({ size_from: e.target.value })} aria-label="From size" style={{ ...sel, width: 76, fontWeight: 600 }} />
             <span className="muted">to</span>
-            <select className="inp" value={f.size_to} onChange={e => set({ size_to: +e.target.value })} aria-label="To size" style={sel}>{sizeOpts.map(z => <option key={z} value={z}>{z}</option>)}</select>
+            <input className="inp" type="number" min={0} max={60} step={1} inputMode="numeric" value={f.size_to} onChange={e => set({ size_to: e.target.value })} aria-label="To size" style={{ ...sel, width: 76, fontWeight: 600 }} />
+            <span className="muted" style={{ fontSize: 12 }}>Type any sizes, e.g. 1 to 14 or 6 to 14</span>
           </div>
         </div>
         <AlarmRow on={al.on} th={al.th}
