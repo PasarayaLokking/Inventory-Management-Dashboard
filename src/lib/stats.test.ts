@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildStats, search, alarmTh, alarmCheck, trendOf, toCsv, daysAgo } from './stats.ts'
+import { buildStats, search, alarmTh, alarmCheck, trendOf, toCsv, daysAgo, inSum } from './stats.ts'
 
 const today = new Date(2026, 9, 7) // 7 Oct 2026
 const item = (id: string, over = {}) => ({ id, code: 'K' + id, tag: 'Shoe ' + id, colour: 'Black', brand: 'Bata', details: '', note: '', category_id: 'c1', size_system: 'UK' as const, size_from: 4, size_to: 6, alarm_on: null, alarm_th: null, alarm_why: '', removed_at: null, ...over })
@@ -40,6 +40,20 @@ test('coverTxt edge cases', () => {
   const S = buildStats([item('a'), item('b')], (id) => (id === 'a' ? 0 : 5), [], [], today)
   assert.equal(S.a.coverTxt, 'Out')
   assert.equal(S.b.coverTxt, 'No sales')
+})
+
+test('inSum adds one stock-in kind inside the window', () => {
+  const rows = [
+    { item_id: 'a', size: 4, type: 'ret' as const, day: '2026-10-07', pairs: 1 }, // today
+    { item_id: 'a', size: 5, type: 'ret' as const, day: '2026-09-08', pairs: 2 }, // 29 days ago
+    { item_id: 'a', size: 5, type: 'ret' as const, day: '2026-09-07', pairs: 9 }, // 30 days ago: outside
+    { item_id: 'a', size: 5, type: 'in' as const, day: '2026-10-01', pairs: 12 }, // the other kind
+    { item_id: 'b', size: 6, type: 'ret' as const, day: '2026-10-02', pairs: 1 },
+  ]
+  assert.deepEqual(inSum(rows, 'ret', 30, today), { a: 3, b: 1 })
+  assert.deepEqual(inSum(rows, 'in', 30, today), { a: 12 })
+  assert.deepEqual(inSum(rows, 'ret', 7, today), { a: 1, b: 1 })
+  assert.deepEqual(inSum(rows, 'ret', 30, today, r => r.item_id + '|' + r.size), { 'a|4': 1, 'a|5': 2, 'b|6': 1 })
 })
 
 test('search matches every word, tag prefix first', () => {

@@ -1,14 +1,16 @@
 import { useEffect, useState, type KeyboardEvent } from 'react'
 import { useData } from '../lib/data.tsx'
 import { catColor, btnInk } from '../lib/theme.ts'
-import { alarmTh, f1, fmtDay, isoDay, plural, rg, search, type Item } from '../lib/stats.ts'
-import { useUi, newLine, focusId, PageHeader, type EntryLine } from '../ui.tsx'
+import { LBL, alarmTh, f1, fmtDay, isoDay, plural, rg, search, type Item } from '../lib/stats.ts'
+import { useUi, newLine, focusId, PageHeader, MoveIcon, type EntryLine, type EntryMode } from '../ui.tsx'
 
-/** New sale / Stock in: several lines of item → size → pairs, saved in one go. */
+/** New sale / Stock in (Supply or Return): several lines of item → size → pairs, saved in one go. */
 export function Entry() {
   const d = useData(), ui = useUi()
   const { mode, lines, setLines, narrow, dark } = ui
-  const isSale = mode === 'sale'
+  const isSale = mode === 'sale', isRet = mode === 'ret'
+  const kind = mode === 'sale' ? 'sold' : mode, name = isSale ? 'Sale' : LBL[kind]
+  const what = isSale ? 'sale' : isRet ? 'return' : 'delivery'
   const [active, setActive] = useState<number | null>(null)
   const [hl, setHl] = useState(0)
   const [date, setDate] = useState(() => isoDay())
@@ -23,7 +25,7 @@ export function Entry() {
     if (lines.length > 1) return setLines(ls => ls.filter(l => l.id !== id))
     const nl = newLine(); setLines([nl]); focusId('li' + nl.id)
   }
-  const setModeFocus = (m: 'sale' | 'in') => { ui.setMode(m); focusId('li' + lines[0].id) }
+  const setModeFocus = (m: EntryMode) => { ui.setMode(m); focusId('li' + lines[0].id) }
   const pick = (lid: number, it: Item) => { setLine(lid, { it: it.id, q: it.tag, size: '' }); setActive(null); focusId('ls' + lid) }
 
   function setSize(ln: EntryLine, v: string) {
@@ -63,7 +65,7 @@ export function Entry() {
     const ls = ok.map(l => ({ item_id: l.it!, size: +l.size, qty: sign * parseInt(l.pairs) }))
     const pairs = ls.reduce((a, l) => a + Math.abs(l.qty), 0)
     setBusy(true)
-    const saved = await ui.record(isSale ? 'sold' : 'in', date, note, ls, (isSale ? 'Sale saved' : 'Stock in saved') + ' · ' + plural(pairs, 'pair') + ' · stock updated' + (skipped ? ' · ' + skipped + ' unfinished line skipped' : ''))
+    const saved = await ui.record(kind, date, note, ls, name + ' saved · ' + plural(pairs, 'pair') + ' · stock updated' + (skipped ? ' · ' + skipped + ' unfinished line skipped' : ''))
     setBusy(false)
     if (!saved) return // keep the lines so nothing typed is lost
     const nl = newLine(); setLines([nl]); setNote(''); setActive(null); focusId('li' + nl.id)
@@ -81,31 +83,31 @@ export function Entry() {
       now = d.st(it.id, +ln.size) + (used[k] || 0); after = now + sign * p; used[k] = (used[k] || 0) + sign * p
       const sold = d.S[it.id].sz30[+ln.size] || 0
       if (isSale && after <= 1 && p > 0) heads.push({ title: it.tag + ' size ' + ln.size + (after < 0 ? ' will go below zero.' : after === 0 ? ' will sell out.' : ' will have 1 left.'), txt: sold ? sold + ' sold in this size in the last 30 days. Add it to your next order.' : 'Not a fast seller, so no rush.' })
-      if (!isSale && now <= 0) heads.push({ title: it.tag + ' size ' + ln.size + ' was sold out.', txt: sold ? sold + ' sold in the last 30 days, so this delivery is well timed.' : 'Good to have it back on the shelf.' })
+      if (!isSale && now <= 0) heads.push({ title: it.tag + ' size ' + ln.size + ' was sold out.', txt: sold ? sold + ' sold in the last 30 days, so this ' + what + ' is well timed.' : 'Good to have it back on the shelf.' })
     }
     const th = it ? alarmTh(it, d.cats) : null
     return { ln, it, show, sug, now, after, alarm: isSale && th !== null && after !== null && after <= th }
   })
   const total = lines.reduce((a, l) => a + (l.it && l.size ? parseInt(l.pairs) || 0 : 0), 0)
 
-  const todayIso = isoDay(d.today), myType = isSale ? 'sold' : 'in'
-  const entries = d.recent.filter(m => m.type === myType && isoDay(new Date(m.created_at)) === todayIso)
+  const todayIso = isoDay(d.today)
+  const entries = d.recent.filter(m => (isSale ? m.type === 'sold' : m.type === 'in' || m.type === 'ret') && isoDay(new Date(m.created_at)) === todayIso)
   const todaySum = (t: string) => d.recent.filter(m => m.type === t && m.occurred_on === todayIso).reduce((a, m) => a + m.movement_lines.reduce((x, l) => x + Math.abs(l.qty), 0), 0)
   const cols = narrow ? 'minmax(0,1fr) minmax(0,1fr) 40px' : 'minmax(0,2.4fr) minmax(0,1.4fr) 92px 130px 40px'
   const cc = (it: Item) => catColor(d.cats.find(c => c.id === it.category_id)?.hue, dark).cc
   const inp = { width: '100%', height: 46, padding: '0 14px', fontSize: 15 }
 
   const toggleBtn = (on: boolean, label: string, sub: string, sym: string, key: 'sale' | 'in') => (
-    <button role="tab" aria-selected={on} onClick={() => setModeFocus(key)} style={{ display: 'flex', alignItems: 'center', gap: 14, minHeight: 80, padding: '12px 22px', border: 0, borderRadius: 15, background: on ? 'var(--c-' + key + ')' : 'transparent', color: on ? btnInk(dark) : 'var(--muted)', cursor: 'pointer', textAlign: 'left', transition: 'background 220ms,color 220ms' }}>
-      <span style={{ width: 44, height: 44, borderRadius: '50%', display: 'grid', placeItems: 'center', flex: '0 0 auto', background: on ? 'rgba(255,255,255,.22)' : 'var(--c-' + key + ')', color: on ? 'inherit' : btnInk(dark), fontSize: 26, fontWeight: 700, lineHeight: 1 }}>{sym}</span>
-      <span className="col" style={{ gap: 2 }}><span style={{ fontSize: 21, fontWeight: 700, letterSpacing: '-.01em' }}>{label}</span><span style={{ fontSize: 13, opacity: 0.85 }}>{sub}</span></span>
+    <button role="tab" aria-selected={on} onClick={() => setModeFocus(key === 'in' && !isSale ? mode : key)} style={{ display: 'flex', alignItems: 'center', gap: narrow ? 10 : 14, minHeight: narrow ? 64 : 80, padding: narrow ? '10px 12px' : '12px 22px', border: 0, borderRadius: 15, background: on ? 'var(--c-' + key + ')' : 'transparent', color: on ? btnInk(dark) : 'var(--muted)', cursor: 'pointer', textAlign: 'left', transition: 'background 220ms,color 220ms' }}>
+      <span style={{ width: narrow ? 34 : 44, height: narrow ? 34 : 44, borderRadius: '50%', display: 'grid', placeItems: 'center', flex: '0 0 auto', background: on ? 'rgba(255,255,255,.22)' : 'var(--c-' + key + ')', color: on ? 'inherit' : btnInk(dark), fontSize: narrow ? 21 : 26, fontWeight: 700, lineHeight: 1 }}>{sym}</span>
+      <span className="col" style={{ gap: 2 }}><span style={{ fontSize: narrow ? 17 : 21, fontWeight: 700, letterSpacing: '-.01em', whiteSpace: 'nowrap' }}>{label}</span><span style={{ fontSize: narrow ? 12 : 13, opacity: 0.85 }}>{sub}</span></span>
     </button>
   )
 
   return (
     <>
       <PageHeader eyebrow={isSale ? 'Money in' : 'Goods arriving'} title={isSale ? 'New sale' : 'Stock in'}
-        sub={isSale ? 'Key in what was sold. Stock goes down as you save.' : 'Key in a delivery from a supplier. Stock goes up as you save.'}
+        sub={isSale ? 'Key in what was sold. Stock goes down as you save.' : isRet ? 'Key in pairs a customer brought back. Stock goes up as you save.' : 'Key in a delivery from a supplier. Stock goes up as you save.'}
         right={
           <div role="tablist" aria-label="Sale or stock in" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, padding: 6, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 20, width: narrow ? '100%' : 'min(480px,100%)', boxShadow: '0 4px 14px rgba(0,0,0,.06)' }}>
             {toggleBtn(isSale, 'Sale', 'Stock goes down', '−', 'sale')}
@@ -165,18 +167,29 @@ export function Entry() {
               <button onClick={addLine} className="btn" style={{ border: '1px dashed var(--acc-line)', color: 'var(--acc-text)', padding: '0 12px' }}>+ Add another item</button>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-end', padding: '18px 20px', borderTop: '1px solid var(--line)', background: 'var(--sunk)', borderRadius: '0 0 16px 16px' }}>
+              {!isSale && (
+                <label className="lbl">Type
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <MoveIcon type={mode} size={24} />
+                    <select className="inp" value={mode} onChange={e => ui.setMode(e.target.value as EntryMode)} style={{ background: 'var(--surface)', padding: '0 10px' }}>
+                      <option value="in">Supply · from a supplier</option>
+                      <option value="ret">Return · a customer brought back</option>
+                    </select>
+                  </span>
+                </label>
+              )}
               <label className="lbl">Date
                 <input type="date" className="inp" value={date} max={isoDay()} onChange={e => setDate(e.target.value || isoDay())} style={{ background: 'var(--surface)' }} />
               </label>
-              <label className="lbl" style={{ flex: '1 1 220px' }}>{isSale ? 'Receipt no.' : 'Supplier / invoice no.'}
-                <input className="inp" value={note} onChange={e => setNote(e.target.value)} placeholder={isSale ? 'e.g. 4821' : 'e.g. JLG invoice 2207'} style={{ background: 'var(--surface)' }} />
+              <label className="lbl" style={{ flex: '1 1 220px' }}>{isSale ? 'Receipt no.' : isRet ? 'Receipt no. / reason' : 'Supplier / invoice no.'}
+                <input className="inp" value={note} onChange={e => setNote(e.target.value)} placeholder={isSale ? 'e.g. 4821' : isRet ? 'e.g. 4821, too small' : 'e.g. JLG invoice 2207'} style={{ background: 'var(--surface)' }} />
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginLeft: 'auto' }}>
                 <div style={{ textAlign: 'right' }}>
                   <div className="muted" style={{ fontSize: 12, fontWeight: 600 }}>Total</div>
                   <div style={{ fontSize: 26, fontWeight: 700, lineHeight: 1.1 }}>{plural(total, 'pair')}</div>
                 </div>
-                <button onClick={save} disabled={busy} className="btn btn-acc" style={{ height: 56, padding: '0 28px', borderRadius: 12, fontSize: 17, boxShadow: '0 6px 18px -8px var(--acc)' }}>{busy ? 'Saving…' : isSale ? 'Save sale' : 'Save stock in'}</button>
+                <button onClick={save} disabled={busy} className="btn btn-acc" style={{ height: 56, padding: '0 28px', borderRadius: 12, fontSize: 17, boxShadow: '0 6px 18px -8px var(--acc)' }}>{busy ? 'Saving…' : 'Save ' + name.toLowerCase()}</button>
               </div>
             </div>
           </section>
@@ -190,23 +203,23 @@ export function Entry() {
 
           <section className="col" style={{ gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>{isSale ? 'Sales keyed in today' : 'Deliveries keyed in today'}</h2>
+              <h2 style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>{isSale ? 'Sales keyed in today' : 'Stock in keyed in today'}</h2>
               <span className="muted" style={{ fontSize: 12 }}>Latest first</span>
             </div>
-            {!entries.length && <div className="muted" style={{ padding: 22, border: '1px dashed var(--line)', borderRadius: 14, fontSize: 13 }}>{isSale ? 'Nothing yet today. Sales you save appear here with an Undo button.' : 'Nothing yet today. Deliveries you save appear here with an Undo button.'}</div>}
+            {!entries.length && <div className="muted" style={{ padding: 22, border: '1px dashed var(--line)', borderRadius: 14, fontSize: 13 }}>{isSale ? 'Nothing yet today. Sales you save appear here with an Undo button.' : 'Nothing yet today. Supply and returns you save appear here with an Undo button.'}</div>}
             {entries.map(m => {
               const who = m.created_by ? d.people[m.created_by]?.display_name : ''
               const meta = [m.occurred_on === todayIso ? 'Today' : fmtDay(m.occurred_on, d.today, true), new Date(m.created_at).toLocaleTimeString('en-MY', { hour: 'numeric', minute: '2-digit' }), who, m.note].filter(Boolean).join(' · ')
               const pairs = m.movement_lines.reduce((a, l) => a + Math.abs(l.qty), 0)
               return (
                 <div key={m.id} className="card" style={{ display: 'flex', gap: 16, alignItems: 'flex-start', padding: '14px 18px', borderRadius: 14 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--acc)', marginTop: 7, flex: '0 0 auto' }} />
+                  {m.type === 'in' || m.type === 'ret' ? <MoveIcon type={m.type} size={20} /> : <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--acc)', marginTop: 7, flex: '0 0 auto' }} />}
                   <div className="col" style={{ flex: 1, minWidth: 0, gap: 3 }}>
                     {m.movement_lines.map((l, i) => <div key={i} style={{ fontSize: 14 }}><b>{d.byId(l.item_id)?.tag}</b> <span className="muted">· size {l.size} ×</span> <b>{Math.abs(l.qty)}</b></div>)}
                     <div className="muted" style={{ fontSize: 12 }}>{meta}</div>
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 700, whiteSpace: 'nowrap' }}>{(isSale ? '−' : '+') + pairs}</div>
-                  {(d.isAdmin || m.created_by === d.me.id) && <button onClick={() => ui.undo(m.id, isSale ? 'Sale' : 'Received')} className="btn" style={{ height: 34, padding: '0 12px', borderRadius: 8, fontSize: 13 }}>Undo</button>}
+                  {(d.isAdmin || m.created_by === d.me.id) && <button onClick={() => ui.undo(m.id, isSale ? 'Sale' : LBL[m.type])} className="btn" style={{ height: 34, padding: '0 12px', borderRadius: 8, fontSize: 13 }}>Undo</button>}
                 </div>
               )
             })}
@@ -216,14 +229,16 @@ export function Entry() {
         <aside className="side">
           <section className="card col" style={{ padding: 18, gap: 12 }}>
             <div className="eyebrow">Today</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
               <div><div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1 }}>{todaySum('sold')}</div><div className="muted" style={{ fontSize: 12, paddingTop: 4 }}>pairs sold</div></div>
-              <div><div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1 }}>{todaySum('in')}</div><div className="muted" style={{ fontSize: 12, paddingTop: 4 }}>pairs received</div></div>
+              {(['in', 'ret'] as const).map(k => (
+                <div key={k}><div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1 }}>{todaySum(k)}</div><div className="muted" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, paddingTop: 4 }}><MoveIcon type={k} size={14} />{k === 'in' ? 'supply' : 'returned'}</div></div>
+              ))}
             </div>
           </section>
           {heads.length > 0 && (
             <section className="col" style={{ padding: 18, background: 'var(--warn-soft)', border: '1px solid var(--line)', borderRadius: 16, gap: 10 }}>
-              <div style={{ fontSize: 14, fontWeight: 700 }}>Heads-up for this {isSale ? 'sale' : 'delivery'}</div>
+              <div style={{ fontSize: 14, fontWeight: 700 }}>Heads-up for this {what}</div>
               {heads.slice(0, 4).map((h, i) => <div key={i} style={{ fontSize: 13, lineHeight: 1.45, textWrap: 'pretty' }}><b>{h.title}</b> {h.txt}</div>)}
             </section>
           )}

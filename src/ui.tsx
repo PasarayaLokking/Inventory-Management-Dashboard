@@ -1,11 +1,13 @@
 import { createContext, useContext, type Dispatch, type ReactNode, type SetStateAction } from 'react'
-import type { AlarmHit, Item, Line, MoveType } from './lib/stats.ts'
+import { LBL, type AlarmHit, type Item, type Line, type MoveType } from './lib/stats.ts'
 
 export type Page = 'sale' | 'stock' | 'sales'
 export type EntryLine = { id: number; q: string; it: string | null; size: string; pairs: string }
 export type Drawer = { kind: 'item'; id: string } | { kind: 'edit'; item: Item | null; catId?: string } | { kind: 'alarms' }
 export type Modal = { kind: 'removeItem'; id: string } | { kind: 'delCat'; id: string; to: string }
 export type ToastKind = 'ok' | 'err' | 'warn' | 'info'
+/** The New sale / Stock in form: a sale, or stock in as Supply ('in') or Return ('ret'). */
+export type EntryMode = 'sale' | 'in' | 'ret'
 
 let lid = 1
 export const newLine = (p: Partial<EntryLine> = {}): EntryLine => ({ id: lid++, q: '', it: null, size: '', pairs: '', ...p })
@@ -13,7 +15,7 @@ export const newLine = (p: Partial<EntryLine> = {}): EntryLine => ({ id: lid++, 
 export type Ui = {
   dark: boolean; narrow: boolean
   page: Page; go: (p: Page) => void
-  mode: 'sale' | 'in'; setMode: (m: 'sale' | 'in') => void
+  mode: EntryMode; setMode: (m: EntryMode) => void
   lines: EntryLine[]; setLines: Dispatch<SetStateAction<EntryLine[]>>
   drawer: Drawer | null; openItem: (id: string) => void; openEdit: (it: Item | null, catId?: string) => void; openAlarms: () => void; closeDrawer: () => void
   setModal: (m: Modal | null) => void
@@ -26,6 +28,8 @@ export type Ui = {
   showAlarm: (hits: AlarmHit[], title?: string, body?: string) => void
   addToIn: (list: { item_id: string; size: number }[]) => void
   restockLine: (it: Item) => void
+  /** Opens the New sale / Stock in page with this shoe on a new line, ready for its size. */
+  startEntry: (it: Item, m: EntryMode) => void
   setItemAlarm: (id: string, on: boolean | null, th: number, quiet?: boolean, why?: string) => Promise<void>
   setCatAlarm: (id: string, on: boolean, th: number, quiet?: boolean) => Promise<void>
   togglePin: (id: string) => Promise<void>
@@ -41,6 +45,22 @@ export function download(name: string, text: string) {
   a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv' }))
   a.download = name
   document.body.appendChild(a); a.click(); a.remove()
+}
+
+/** Supply / Return badge: a circle in the kind's colour with a truck (Supply) or a U-turn arrow (Return). */
+export function MoveIcon({ type, size = 18 }: { type: 'in' | 'ret'; size?: number }) {
+  const fill = 'var(--c-' + type + ')'
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" role="img" aria-label={LBL[type]} style={{ flex: '0 0 auto', verticalAlign: 'middle' }}>
+      <title>{LBL[type]}</title>
+      <circle cx={12} cy={12} r={12} style={{ fill }} />
+      <g style={{ fill: 'none', stroke: 'var(--surface)', strokeWidth: type === 'in' ? 1.6 : 2, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
+        {type === 'in'
+          ? <><path d="M5 8h8v6.5H5zM13 10h3.5l2.5 2.5v2H13" /><circle cx={8} cy={15.5} r={1.6} style={{ fill }} /><circle cx={16} cy={15.5} r={1.6} style={{ fill }} /></>
+          : <path d="M9 7h5a3.5 3.5 0 0 1 0 7H7m3-3-3 3 3 3" />}
+      </g>
+    </svg>
+  )
 }
 
 export function Switch({ on, onClick, label }: { on: boolean; onClick: () => void; label: string }) {

@@ -16,6 +16,8 @@ export type Line = { item_id: string; size: number; qty: number }
 export type Movement = { id: string; type: MoveType; occurred_on: string; note: string; created_by: string | null; created_at: string; movement_lines: Line[] }
 export type SoldDay = { item_id: string; size: number; day: string; pairs: number }
 export type SoldMonth = { item_id: string; month: string; pairs: number; last_day: string }
+/** Stock in per day: 'in' = Supply, 'ret' = Return (in_daily view). */
+export type InDay = { item_id: string; size: number; type: 'in' | 'ret'; day: string; pairs: number }
 export type StockFn = (itemId: string, size: number) => number
 
 export const DAY = 864e5
@@ -28,7 +30,7 @@ export const SYS: Record<Sys, { label: string; short: string; sizes: number[] }>
 }
 export const PRESETS: [string, Sys, number, number][] = [['UK 4–10', 'UK', 4, 10], ['UK 4–12', 'UK', 4, 12], ['EU 39–45', 'EU', 39, 45], ['EU 33–45', 'EU', 33, 45], ['Capal 1–10', 'CAP', 1, 10]]
 export const HUES = [250, 45, 300, 150, 200, 15, 95, 330]
-export const LBL: Record<MoveType, string> = { sold: 'Sold', in: 'Received', ret: 'Customer return', count: 'Stock count', ex: 'Size exchange', open: 'Opening stock' }
+export const LBL: Record<MoveType, string> = { sold: 'Sold', in: 'Supply', ret: 'Return', count: 'Stock count', ex: 'Size exchange', open: 'Opening stock' }
 
 export const norm = (s: unknown) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '')
 export const n0 = (n: number) => Number(n).toLocaleString('en-MY')
@@ -83,6 +85,13 @@ export function buildStats(items: Item[], st: StockFn, daily: SoldDay[], monthly
     a.coverTxt = a.total <= 0 ? 'Out' : a.cover === null ? 'No sales' : a.cover >= 52 ? '52+ wk' : a.cover < 1 ? '<1 wk' : Math.round(a.cover) + ' wk'
   }
   return S
+}
+
+/** Pairs of one stock-in kind over the last `days` days (today counts as day 0), per item or per any key. */
+export function inSum(rows: InDay[], type: InDay['type'], days: number, today: Date, key = (r: InDay) => r.item_id) {
+  const out: Record<string, number> = {}
+  for (const r of rows) { const d = daysAgo(r.day, today); if (r.type === type && d >= 0 && d < days) { const k = key(r); out[k] = (out[k] || 0) + r.pairs } }
+  return out
 }
 
 /** Every word must appear somewhere in tag/code/colour/details/brand/category; tag-prefix matches first. */

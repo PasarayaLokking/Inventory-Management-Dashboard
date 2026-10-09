@@ -4,7 +4,7 @@ import { supabase, errText } from './lib/supabase.ts'
 import { DataProvider, useData } from './lib/data.tsx'
 import { pal, catColor, type PageKey } from './lib/theme.ts'
 import { alarmCheck, LBL, n0, plural, rg, type AlarmHit, type Item, type Line, type MoveType } from './lib/stats.ts'
-import { UiContext, newLine, focusId, type Drawer, type EntryLine, type Modal, type Page, type ToastKind, type Ui } from './ui.tsx'
+import { UiContext, newLine, focusId, type Drawer, type EntryLine, type EntryMode, type Modal, type Page, type ToastKind, type Ui } from './ui.tsx'
 import { Login } from './pages/Login.tsx'
 import { Entry } from './pages/Entry.tsx'
 import { Stock } from './pages/Stock.tsx'
@@ -46,7 +46,7 @@ export function Shell({ dark, setDark }: { dark: boolean; setDark: (v: boolean) 
   const [w, setW] = useState(window.innerWidth)
   const narrow = w < 860
   const [page, setPage] = useState<Page>(hashPage)
-  const [mode, setMode] = useState<'sale' | 'in'>('sale')
+  const [mode, setMode] = useState<EntryMode>('sale')
   const [lines, setLines] = useState<EntryLine[]>(() => [newLine()])
   const [drawer, setDrawer] = useState<Drawer | null>(null)
   const lastDrawer = useRef<Drawer | null>(null)
@@ -59,7 +59,8 @@ export function Shell({ dark, setDark }: { dark: boolean; setDark: (v: boolean) 
   const isAdmin = d.isAdmin
   const cur: Page = isAdmin ? page : 'sale'
 
-  useLayoutEffect(() => applyPal(dark, cur === 'sale' ? mode : cur), [dark, cur, mode])
+  // Supply and Return share the blue Stock in page; red stays on the Return badge only
+  useLayoutEffect(() => applyPal(dark, cur === 'sale' ? (mode === 'sale' ? 'sale' : 'in') : cur), [dark, cur, mode])
   useEffect(() => {
     const r = () => setW(window.innerWidth), h = () => setPage(hashPage())
     window.addEventListener('resize', r); window.addEventListener('hashchange', h)
@@ -79,7 +80,7 @@ export function Shell({ dark, setDark }: { dark: boolean; setDark: (v: boolean) 
 
   const go = (p: Page) => {
     if (!isAdmin && p !== 'sale') return toast('That page needs an admin account', 'info')
-    if (p !== cur) location.hash = p === 'sale' ? '' : p
+    if (p !== cur) { location.hash = p === 'sale' ? '' : p; window.scrollTo(0, 0) }
     setPage(p); setDrawer(null)
   }
 
@@ -125,7 +126,7 @@ export function Shell({ dark, setDark }: { dark: boolean; setDark: (v: boolean) 
     if (!nls.length) return
     setLines(ls => [...ls.filter(l => l.q || l.it), ...nls]); setMode('in'); go('sale'); setPop(null)
     focusId('lp' + nls[0].id)
-    toast('Switched to Stock in · ' + plural(nls.length, 'line') + ' added. Type the pairs received.', 'info')
+    toast('Switched to Supply · ' + plural(nls.length, 'line') + ' added. Type the pairs received.', 'info')
   }
 
   function restockLine(it: Item) {
@@ -133,7 +134,14 @@ export function Shell({ dark, setDark }: { dark: boolean; setDark: (v: boolean) 
     const nl = newLine({ q: it.tag, it: it.id, size: String(z) })
     setLines(ls => [...ls.filter(l => l.q || l.it), nl]); setMode('in')
     focusId('lp' + nl.id)
-    toast('Switched to Stock in · ' + it.tag + ' added, size ' + z + ' sells most', 'info')
+    toast('Switched to Supply · ' + it.tag + ' added, size ' + z + ' sells most', 'info')
+  }
+
+  function startEntry(it: Item, m: EntryMode) {
+    const nl = newLine({ q: it.tag, it: it.id })
+    setLines(ls => [...ls.filter(l => l.q || l.it), nl]); setMode(m); go('sale')
+    focusId('ls' + nl.id)
+    toast((m === 'sale' ? 'New sale' : 'Supply') + ' · ' + it.tag + ' added. Pick the size, then type the pairs.', 'info')
   }
 
   function alarmNow(its: Item[], th: number) {
@@ -198,16 +206,16 @@ export function Shell({ dark, setDark }: { dark: boolean; setDark: (v: boolean) 
     openEdit: (item, catId) => setDrawer({ kind: 'edit', item, catId }),
     openAlarms: () => setDrawer({ kind: 'alarms' }),
     closeDrawer: () => setDrawer(null),
-    setModal, toast, record, undo, write, showAlarm, addToIn, restockLine, setItemAlarm, setCatAlarm, togglePin,
+    setModal, toast, record, undo, write, showAlarm, addToIn, restockLine, startEntry, setItemAlarm, setCatAlarm, togglePin,
   }
 
   // ── sidebar ──
   const totalPairs = d.live.reduce((a, i) => a + d.S[i.id].total, 0)
-  const nav = ([['sale', mode === 'in' ? 'Stock in' : 'New sale'], ['stock', 'Stock'], ['sales', 'Sales'], ['alarms', 'Low-stock alarms']] as const)
+  const nav = ([['sale', mode === 'sale' ? 'New sale' : 'Stock in'], ['stock', 'Stock'], ['sales', 'Sales'], ['alarms', 'Low-stock alarms']] as const)
     .filter(([k]) => isAdmin || k === 'sale')
     .map(([k, label]) => {
       const isA = k === 'alarms', on = isA ? drawer?.kind === 'alarms' : cur === k
-      return { k, label, on, go: isA ? ui.openAlarms : () => go(k), dot: 'var(--c-' + (k === 'sale' && mode === 'in' ? 'in' : k) + ')', badge: isA ? d.hits.length : 0 }
+      return { k, label, on, go: isA ? ui.openAlarms : () => go(k), dot: 'var(--c-' + (k === 'sale' && mode !== 'sale' ? 'in' : k) + ')', badge: isA ? d.hits.length : 0 }
     })
   const full = narrow || !navCol, slim = !narrow && navCol
   const pinSide = isAdmin && !narrow && !navCol ? d.pins.map(d.byId).filter((i): i is Item => !!i && !i.removed_at) : []
@@ -222,7 +230,7 @@ export function Shell({ dark, setDark }: { dark: boolean; setDark: (v: boolean) 
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', minWidth: 0, justifyContent: 'space-between', flexDirection: slim ? 'column' : 'row' }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', minWidth: 0 }}>
               <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--acc)', color: 'var(--acc-ink)', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 18, flex: '0 0 auto' }}>S</div>
-              {full && <div style={{ minWidth: 0 }}><div style={{ fontWeight: 700, fontSize: 17, letterSpacing: '-.01em', lineHeight: 1.2 }}>Stock Management System</div><div className="muted" style={{ fontSize: 13 }}>{d.live.length} items · {n0(totalPairs)} pairs in stock</div></div>}
+              {full && <div style={{ minWidth: 0 }}><div style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-.01em', lineHeight: 1.2 }}>Stock Management System</div><div className="muted" style={{ fontSize: 12, paddingTop: 2 }}>{d.live.length} items · {n0(totalPairs)} pairs</div></div>}
             </div>
             {!narrow && <button onClick={() => setNavCol(!navCol)} title={navCol ? 'Expand sidebar' : 'Collapse sidebar'} aria-label={navCol ? 'Expand sidebar' : 'Collapse sidebar'} className="hov" style={{ width: 36, height: 36, border: '1px solid var(--line)', borderRadius: 10, background: 'var(--surface)', color: 'var(--muted)', cursor: 'pointer', fontSize: 18, flex: '0 0 auto', padding: 0 }}>{navCol ? '»' : '«'}</button>}
           </div>

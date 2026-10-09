@@ -1,26 +1,27 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { supabase, fetchAll, errText } from './supabase.ts'
-import { alarmTh, buildStats, isoDay, rg, type Category, type Item, type ItemStat, type Movement, type Profile, type SoldDay, type SoldMonth, type StockFn } from './stats.ts'
+import { alarmTh, buildStats, isoDay, rg, type Category, type InDay, type Item, type ItemStat, type Movement, type Profile, type SoldDay, type SoldMonth, type StockFn } from './stats.ts'
 
-export type Raw = { profiles: Profile[]; cats: Category[]; items: Item[]; stock: { item_id: string; size: number; qty: number }[]; daily: SoldDay[]; monthly: SoldMonth[]; recent: Movement[]; pins: string[] }
+export type Raw = { profiles: Profile[]; cats: Category[]; items: Item[]; stock: { item_id: string; size: number; qty: number }[]; daily: SoldDay[]; monthly: SoldMonth[]; ins: InDay[]; recent: Movement[]; pins: string[] }
 
 async function load(userId: string): Promise<Raw> {
   const now = new Date(), today = isoDay(now), start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString()
   const recent = supabase.from('movements').select('id,type,occurred_on,note,created_by,created_at,movement_lines(item_id,size,qty)')
     .is('voided_at', null).or(`occurred_on.gte.${today},created_at.gte.${start}`).order('created_at', { ascending: false })
   const pins = supabase.from('pins').select('item_id').eq('user_id', userId)
-  const [profiles, cats, items, stock, daily, monthly, r, p] = await Promise.all([
+  const [profiles, cats, items, stock, daily, monthly, ins, r, p] = await Promise.all([
     fetchAll<Profile>('profiles', '*', ['id']),
     fetchAll<Category>('categories', '*', ['sort_order', 'name']),
     fetchAll<Item>('items', '*', ['tag']),
     fetchAll<Raw['stock'][number]>('stock', 'item_id,size,qty', ['item_id', 'size']),
     fetchAll<SoldDay>('sold_daily', '*', ['day', 'item_id', 'size']),
     fetchAll<SoldMonth>('sold_monthly', '*', ['month', 'item_id']),
+    fetchAll<InDay>('in_daily', '*', ['day', 'item_id', 'size', 'type']),
     recent, pins,
   ])
   if (r.error) throw r.error
   if (p.error) throw p.error
-  return { profiles, cats, items, stock, daily, monthly, recent: r.data as Movement[], pins: p.data.map(x => x.item_id as string) }
+  return { profiles, cats, items, stock, daily, monthly, ins, recent: r.data as Movement[], pins: p.data.map(x => x.item_id as string) }
 }
 
 export function derive(raw: Raw, userId: string) {

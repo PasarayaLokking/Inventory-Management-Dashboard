@@ -2,8 +2,8 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { useData } from '../lib/data.tsx'
 import { supabase } from '../lib/supabase.ts'
 import { catColor } from '../lib/theme.ts'
-import { HUES, SYS, f1, isoDay, n0, plural, rg, search, toCsv, type Item, type Sys } from '../lib/stats.ts'
-import { useUi, PageHeader, download } from '../ui.tsx'
+import { HUES, LBL, SYS, f1, inSum, isoDay, n0, plural, rg, search, toCsv, type Item, type Sys } from '../lib/stats.ts'
+import { useUi, PageHeader, MoveIcon, download } from '../ui.tsx'
 
 const HATCH = 'repeating-linear-gradient(135deg,var(--line) 0 1px,transparent 1px 6px)'
 
@@ -31,6 +31,7 @@ export function Stock() {
   if (!q.trim() || sort !== 'name') sq = sq.sort(sorters[sort])
   const filtering = !!q.trim() || hide
   const openId = ui.drawer?.kind === 'item' ? ui.drawer.id : null
+  const in30 = { in: inSum(d.ins, 'in', 30, d.today), ret: inSum(d.ins, 'ret', 30, d.today) }
 
   // ── category actions ──
   const nextHue = HUES.find(h => !d.cats.some(c => c.hue === h)) ?? HUES[0]
@@ -106,6 +107,7 @@ export function Stock() {
             {legend({ border: '1px solid var(--line)' }, '–', 'none left')}
             {legend({ background: 'var(--neg-soft)', color: 'var(--neg)', fontWeight: 700 }, '-2', 'below zero, needs checking')}
             {legend({ background: 'repeating-linear-gradient(135deg,var(--line) 0 1px,transparent 1px 5px)' }, '', 'size not stocked')}
+            {(['in', 'ret'] as const).map(k => <span key={k} style={{ display: 'flex', gap: 6, alignItems: 'center' }}><MoveIcon type={k} />{LBL[k]}, last 30 days</span>)}
             <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}><span style={{ width: 4, height: 20, borderRadius: 2, background: 'var(--muted)' }} />left edge = category colour</span>
           </div>
 
@@ -169,6 +171,7 @@ export function Stock() {
                             {t.sizes.map(z => <th key={z} style={{ background: 'var(--sunk)', padding: '8px 0', minWidth: 40, fontWeight: 600, borderBottom: '1px solid var(--line)' }}>{z}</th>)}
                             <th style={{ background: 'var(--sunk)', padding: '8px 10px', color: 'var(--ink)', fontWeight: 700, borderBottom: '1px solid var(--line)', borderLeft: '1px solid var(--line)' }}>Total</th>
                             <th style={{ background: 'var(--sunk)', padding: '8px 10px', fontWeight: 600, borderBottom: '1px solid var(--line)', whiteSpace: 'nowrap' }}>Sold 30d</th>
+                            <th style={{ background: 'var(--sunk)', padding: '8px 10px', fontWeight: 600, borderBottom: '1px solid var(--line)', whiteSpace: 'nowrap' }}>In 30d</th>
                             <th style={{ background: 'var(--sunk)', borderBottom: '1px solid var(--line)', padding: '8px 14px' }} />
                           </tr>
                         </thead>
@@ -189,6 +192,11 @@ export function Stock() {
                                 })}
                                 <td style={{ textAlign: 'center', padding: '0 10px', borderBottom: '1px solid var(--line)', borderLeft: '1px solid var(--line)', fontWeight: 700, fontSize: 15, color: X.total < 0 ? 'var(--neg)' : 'var(--ink)' }}>{X.total}</td>
                                 <td className="muted" style={{ textAlign: 'center', padding: '0 10px', borderBottom: '1px solid var(--line)' }}>{X.s30 || '–'}</td>
+                                <td style={{ textAlign: 'center', padding: '0 10px', borderBottom: '1px solid var(--line)', whiteSpace: 'nowrap' }}>
+                                  {in30.in[it.id] || in30.ret[it.id]
+                                    ? <span style={{ display: 'inline-flex', gap: 10 }}>{(['in', 'ret'] as const).filter(k => in30[k][it.id]).map(k => <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 600 }}><MoveIcon type={k} />{in30[k][it.id]}</span>)}</span>
+                                    : <span className="muted">–</span>}
+                                </td>
                                 <td style={{ padding: '0 12px', borderBottom: '1px solid var(--line)', textAlign: 'right' }}>
                                   <button onClick={e => { e.stopPropagation(); ui.setModal({ kind: 'removeItem', id: it.id }) }} title="Remove this item from the system" className="btn hov-neg" style={{ height: 32, padding: '0 10px', borderRadius: 8, color: 'var(--muted)', fontSize: 12 }}>Remove</button>
                                 </td>

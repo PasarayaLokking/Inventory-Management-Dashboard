@@ -1,7 +1,7 @@
 // Colour tokens from the design. Each page has its own accent hue; light/dark recomputes everything.
 
-export type PageKey = 'sale' | 'in' | 'stock' | 'items' | 'sales' | 'alarms'
-const H: Record<PageKey, [number, number]> = { sale: [150, 0.15], in: [255, 0.15], stock: [195, 0.11], items: [290, 0.15], sales: [68, 0.13], alarms: [355, 0.16] }
+export type PageKey = 'sale' | 'in' | 'ret' | 'stock' | 'items' | 'sales' | 'alarms'
+const H: Record<PageKey, [number, number]> = { sale: [150, 0.15], in: [255, 0.15], ret: [25, 0.19], stock: [195, 0.11], items: [290, 0.15], sales: [68, 0.13], alarms: [355, 0.16] }
 const o = (l: number, c: number, h: number) => `oklch(${l} ${+c.toFixed(3)} ${h})`
 
 export function pal(dark: boolean, k: PageKey): Record<string, string> {

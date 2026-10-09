@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useData } from '../lib/data.tsx'
 import { fetchAll } from '../lib/supabase.ts'
 import { catColor, btnInk } from '../lib/theme.ts'
-import { LBL, SYS, agoDay, coverWords, f1, fmtDay, isoDay, monthName, n0, rg, toCsv, trendOf, type Item, type ItemStat, type MoveType } from '../lib/stats.ts'
-import { useUi, PageHeader, download } from '../ui.tsx'
+import { LBL, SYS, agoDay, coverWords, f1, fmtDay, inSum, isoDay, monthName, n0, rg, toCsv, trendOf, type Item, type ItemStat, type MoveType } from '../lib/stats.ts'
+import { useUi, PageHeader, MoveIcon, download } from '../ui.tsx'
 
 const PERIODS = [[7, '7 days', 's7'], [30, '30 days', 's30'], [90, '3 months', 's90'], [365, '12 months', 's365']] as const
 const trTxt = (c: number | null) => (c === null ? '—' : (c > 0 ? '+' : '') + c + '%')
@@ -24,9 +24,14 @@ export function Sales() {
   // ── period figures ──
   const rk = d.live.map(it => ({ it, n: S[it.id][key] })).filter(x => x.n > 0).sort((a, b) => b.n - a.n)
   const sold = rk.reduce((a, x) => a + x.n, 0), top = rk[0], mx = top ? top.n : 1
+  // returns in the period: per shoe, per shoe+size, total
+  const retBy = inSum(d.ins, 'ret', period, today), retSz = inSum(d.ins, 'ret', period, today, r => r.item_id + '|' + r.size)
+  const retN = Object.values(retBy).reduce((a, n) => a + n, 0)
+  const retList = d.items.filter(i => retBy[i.id]).sort((a, b) => retBy[b.id] - retBy[a.id])
   const tiles = [
     { label: 'Pairs sold', value: n0(sold), sub: 'About ' + f1(sold / (period / 7)) + ' pairs a week' },
     { label: 'Best seller', value: top ? top.it.tag : '—', sub: top ? top.n + ' pairs · ' + S[top.it.id].coverTxt + ' of stock left' : 'No sales' },
+    { label: 'Pairs returned', value: n0(retN), sub: sold ? Math.round((retN / sold) * 100) + '% of pairs sold' : 'No sales to compare', ret: true },
   ]
   const restockSales = rk.filter(x => { const X = S[x.it.id]; return X.total <= 0 || (X.cover !== null && X.cover < 4) }).slice(0, 6)
   const stockPos = d.live.reduce((a, i) => a + Math.max(0, S[i.id].total), 0) || 1
@@ -72,8 +77,8 @@ export function Sales() {
     if (!rows) return ui.toast('Download failed. Check the connection and try again.', 'err')
     const out = rows.filter(r => !r.movement.voided_at).sort((a, b) => a.movement.occurred_on.localeCompare(b.movement.occurred_on))
       .map(r => [r.movement.occurred_on, d.byId(r.item_id)?.tag, LBL[r.movement.type], r.size, r.qty, r.movement.note, r.movement.created_by ? d.people[r.movement.created_by]?.display_name : ''])
-    download('sales-and-deliveries-' + isoDay() + '.csv', toCsv([['Date', 'Item', 'Action', 'Size', 'Pairs', 'Note', 'By'], ...out]))
-    ui.toast('Downloaded all sales & deliveries', 'info')
+    download('sales-supply-returns-' + isoDay() + '.csv', toCsv([['Date', 'Item', 'Action', 'Size', 'Pairs', 'Note', 'By'], ...out]))
+    ui.toast('Downloaded all sales, supply & returns', 'info')
   }
 
   const showInChart = (id: string) => { setTrendId(id); document.getElementById('one-shoe')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
@@ -148,7 +153,7 @@ export function Sales() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(170px,1fr))', gap: 16 }}>
           {tiles.map(t => (
             <div key={t.label} className="card col" style={{ padding: 20, gap: 6, minWidth: 0 }}>
-              <div className="eyebrow">{t.label}</div>
+              <div className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>{t.ret && <MoveIcon type="ret" size={14} />}{t.label}</div>
               <div className="ell" style={{ fontSize: 34, fontWeight: 700, lineHeight: 1.05, letterSpacing: '-.02em' }}>{t.value}</div>
               <div className="muted" style={{ fontSize: 13 }}>{t.sub}</div>
             </div>
@@ -228,13 +233,28 @@ export function Sales() {
               </button>
             ))}
           </section>
+          <section className="card col" style={{ padding: 18, gap: 10 }}>
+            <div><div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 700 }}><MoveIcon type="ret" />Returned goods · {PL}</div><div className="muted" style={{ fontSize: 12 }}>Most returned first. The reasons are in the CSV download, Note column.</div></div>
+            {!retList.length && <div className="muted" style={{ fontSize: 13, padding: '8px 0', borderTop: '1px solid var(--line)' }}>No returns in this period.</div>}
+            {retList.slice(0, 8).map(i => {
+              const n = retBy[i.id], s = S[i.id][key]
+              const sz = S[i.id].sizes.filter(z => retSz[i.id + '|' + z]).map(z => z + (retSz[i.id + '|' + z] > 1 ? ' ×' + retSz[i.id + '|' + z] : ''))
+              return (
+                <button key={i.id} onClick={() => ui.openItem(i.id)} className="row-btn hov-acc" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 14, alignItems: 'center', borderTop: '1px solid var(--line)', padding: '8px 0' }}>
+                  <span style={{ minWidth: 0 }}><b className="ell" style={{ display: 'block', fontSize: 13 }}>{i.tag}</b><span className="muted" style={{ fontSize: 12 }}>size {sz.join(', ')}</span></span>
+                  <span style={{ fontSize: 12, whiteSpace: 'nowrap', textAlign: 'right' }}><b>{n} returned</b> · {s} sold{s ? ' · ' + Math.round((n / s) * 100) + '%' : ''}</span>
+                </button>
+              )
+            })}
+            {retList.length > 8 && <div className="muted" style={{ fontSize: 12 }}>+{retList.length - 8} more in the CSV download</div>}
+          </section>
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'flex-start' }}>
           <section className="card" style={{ flex: '1 1 560px', minWidth: 0, overflow: 'hidden' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '14px 18px', borderBottom: '1px solid var(--line)', gap: 12, flexWrap: 'wrap' }}>
               <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Best sellers · {PL}</h2>
-              <button onClick={csvSales} className="btn" style={{ height: 34, padding: '0 12px', borderRadius: 8, fontSize: 13 }}>Download all sales &amp; deliveries (CSV)</button>
+              <button onClick={csvSales} className="btn" style={{ height: 34, padding: '0 12px', borderRadius: 8, fontSize: 13 }}>Download all sales, supply &amp; returns (CSV)</button>
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
@@ -242,6 +262,7 @@ export function Sales() {
                   <th style={{ textAlign: 'left', padding: '8px 18px', fontWeight: 600, width: 36 }}>#</th>
                   <th style={{ textAlign: 'left', padding: 8, fontWeight: 600 }}>Item</th>
                   <th style={{ textAlign: 'left', padding: 8, fontWeight: 600, minWidth: 160 }}>Pairs sold</th>
+                  <th style={{ textAlign: 'right', padding: 8, fontWeight: 600 }}>Returned</th>
                   <th style={{ textAlign: 'right', padding: 8, fontWeight: 600 }}>Last sale</th>
                   <th style={{ textAlign: 'right', padding: '8px 18px', fontWeight: 600 }}>Watch</th>
                 </tr></thead>
@@ -253,6 +274,7 @@ export function Sales() {
                         <td className="muted" style={{ padding: '10px 18px' }}>{i + 1}</td>
                         <td style={{ padding: '10px 8px' }}><div style={{ fontWeight: 600 }}>{x.it.tag}</div><div className="muted" style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: cc(x.it) }} />{d.catName(x.it.category_id)}</div></td>
                         <td style={{ padding: '10px 8px' }}><div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ fontWeight: 700, minWidth: 28 }}>{x.n}</span><span style={{ flex: 1, height: 8, borderRadius: 4, background: 'var(--sunk)', minWidth: 60 }}><span style={{ display: 'block', height: 8, borderRadius: 4, width: Math.round((x.n / mx) * 100) + '%', background: 'var(--acc)' }} /></span></div></td>
+                        <td style={{ padding: '10px 8px', textAlign: 'right', whiteSpace: 'nowrap' }}>{retBy[x.it.id] ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 600 }}><MoveIcon type="ret" />{retBy[x.it.id]}</span> : <span className="muted">–</span>}</td>
                         <td className="muted" style={{ padding: '10px 8px', textAlign: 'right', whiteSpace: 'nowrap' }}>{X.last === null ? '—' : X.last === 0 ? 'Today' : fmtDay(agoDay(X.last, today), today)}</td>
                         <td style={{ padding: '6px 18px 6px 8px', textAlign: 'right' }}><button onClick={e => { e.stopPropagation(); ui.togglePin(x.it.id) }} title={pinned ? 'Unpin' : 'Pin to watch closely'} style={{ height: 32, padding: '0 12px', borderRadius: 999, fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', ...pinBtn(pinned), background: pinned ? 'var(--acc)' : 'transparent' }}>{pinned ? 'Pinned' : 'Pin'}</button></td>
                       </tr>

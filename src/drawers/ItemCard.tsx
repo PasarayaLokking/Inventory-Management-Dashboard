@@ -1,19 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useData } from '../lib/data.tsx'
 import { supabase } from '../lib/supabase.ts'
 import { catColor, btnInk } from '../lib/theme.ts'
 import { LBL, agoDay, alarmTh, f1, fmtDay, isoDay, monthName, plural, rg, type Line, type Movement } from '../lib/stats.ts'
 import { useUi, AlarmRow } from '../ui.tsx'
 
-type Act = 'sale' | 'in' | 'ret' | 'count' | 'ex'
+// Sales and stock in open the Entry page (ui.startEntry); these three stay in the card
+type Act = 'ret' | 'count' | 'ex'
 const AT: Record<Act, [title: string, help: string, inLabel: string, save: string, notePh: string]> = {
-  sale: ['Record a sale', 'Type pairs sold under each size.', 'Sold now', 'Save sale', 'Receipt no. (optional)'],
-  in: ['Record stock in', 'Type pairs received under each size.', 'Received', 'Save stock in', 'Supplier / invoice no.'],
   ret: ['Customer return', 'Type pairs brought back. They go back into stock.', 'Returned', 'Save return', 'Reason (optional)'],
   count: ['Stock count', 'Type what you counted on the shelf. The app records the difference.', 'Counted', 'Save count', 'Who counted (optional)'],
   ex: ['Size exchange', 'Customer swapped one pair for another size.', '', 'Save exchange', 'Receipt no. (optional)'],
 }
-const TYPE = { sale: 'sold', in: 'in', ret: 'ret', count: 'count', ex: 'ex' } as const
 
 /** The item card drawer (admin): sizes, insight, alarm, quick actions, monthly bars, history. */
 export function ItemCard({ id }: { id: string }) {
@@ -25,6 +23,14 @@ export function ItemCard({ id }: { id: string }) {
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [hist, setHist] = useState<{ rows: Movement[]; count: number } | null>(null)
+  const form = useRef<HTMLElement>(null)
+
+  // the form opens below the buttons: bring it into view and put the cursor in it
+  useEffect(() => {
+    if (!act) return
+    form.current?.scrollIntoView({ block: 'nearest' })
+    form.current?.querySelector<HTMLElement>('input, select')?.focus({ preventScroll: true })
+  }, [act])
 
   // history reloads whenever the shared data does (d.recent is replaced on every reload)
   useEffect(() => {
@@ -68,24 +74,24 @@ export function ItemCard({ id }: { id: string }) {
       const n = parseInt(inp[z] ?? '')
       if (isNaN(n)) continue
       if (act === 'count') { const diff = n - st(it.id, z); if (diff) { lines.push({ item_id: it.id, size: z, qty: n }); deltas.push({ item_id: it.id, size: z, qty: diff }) } }
-      else if (n > 0) lines.push({ item_id: it.id, size: z, qty: act === 'sale' ? -n : n })
+      else if (n > 0) lines.push({ item_id: it.id, size: z, qty: n })
     }
     if (!lines.length) return ui.toast(act === 'count' ? 'Your counts match the stock card. Nothing to change.' : 'Type at least one number in the grid.', act === 'count' ? 'info' : 'err')
     const pairs = lines.reduce((a, l) => a + Math.abs(l.qty), 0)
-    const msg = act === 'count' ? 'Stock count saved · ' + plural(lines.length, 'size') + ' corrected' : act === 'ex' ? 'Size exchange saved · stock updated' : { sale: 'Sale saved', in: 'Stock in saved', ret: 'Return saved' }[act] + ' · ' + plural(pairs, 'pair') + ' · stock updated'
+    const msg = act === 'count' ? 'Stock count saved · ' + plural(lines.length, 'size') + ' corrected' : act === 'ex' ? 'Size exchange saved · stock updated' : 'Return saved · ' + plural(pairs, 'pair') + ' · stock updated'
     setBusy(true)
-    const ok = await ui.record(TYPE[act], isoDay(), note, lines, msg, act === 'count' ? deltas : lines)
+    const ok = await ui.record(act, isoDay(), note, lines, msg, act === 'count' ? deltas : lines)
     setBusy(false)
     if (ok) setAct(null)
   }
 
   const grid = act && act !== 'ex' ? sizes.map(z => {
     const now = st(it.id, z), n = parseInt(inp[z] ?? '')
-    const after = isNaN(n) ? now : act === 'count' ? n : act === 'sale' ? now - n : now + n
+    const after = isNaN(n) ? now : act === 'count' ? n : now + n
     return { z, now, after, color: after < 0 ? 'var(--neg)' : after !== now ? 'var(--acc-text)' : 'var(--muted)' }
   }) : []
   const actBtn = (k: 'sale' | 'in', label: string) => (
-    <button onClick={() => start(k)} className="btn hov-bright" style={{ flex: '1 1 160px', height: 48, border: 0, background: 'var(--c-' + k + ')', color: btnInk(ui.dark), fontWeight: 700, fontSize: 15, boxShadow: act === k ? '0 0 0 3px var(--surface), 0 0 0 5px var(--c-' + k + ')' : 'none' }}>{label}</button>
+    <button onClick={() => ui.startEntry(it, k)} className="btn hov-bright" style={{ flex: '1 1 160px', height: 48, border: 0, background: 'var(--c-' + k + ')', color: btnInk(ui.dark), fontWeight: 700, fontSize: 15 }}>{label}</button>
   )
   const todayIso = isoDay(today)
 
@@ -136,7 +142,7 @@ export function ItemCard({ id }: { id: string }) {
         </div>
 
         {act && (
-          <section style={{ border: '1px solid var(--acc-line)', borderRadius: 14, overflow: 'hidden' }}>
+          <section ref={form} style={{ border: '1px solid var(--acc-line)', borderRadius: 14, overflow: 'hidden' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: 'var(--sunk)' }}>
               <div><div style={{ fontWeight: 700, fontSize: 15 }}>{AT[act][0]}</div><div className="muted" style={{ fontSize: 12 }}>{AT[act][1]}</div></div>
               <button onClick={() => setAct(null)} className="btn" style={{ height: 32, padding: '0 10px', border: 0, borderRadius: 8, fontSize: 13, color: 'var(--muted)' }}>Cancel</button>
