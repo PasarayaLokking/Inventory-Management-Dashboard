@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useData } from '../lib/data.tsx'
 import { fetchAll } from '../lib/supabase.ts'
 import { catColor, btnInk } from '../lib/theme.ts'
-import { LBL, SYS, agoDay, coverWords, f1, fmtDay, inSum, isoDay, monthName, n0, rg, toCsv, trendOf, type Item, type ItemStat, type MoveType } from '../lib/stats.ts'
+import { LBL, SYS, agoDay, coverWords, f1, fmtDay, inSum, isoDay, monthName, n0, rg, sizeByMonth, toCsv, trendOf, type Item, type ItemStat, type MoveType } from '../lib/stats.ts'
 import { useUi, PageHeader, MoveIcon, download } from '../ui.tsx'
 
 const PERIODS = [[7, '7 days', 's7'], [30, '30 days', 's30'], [90, '3 months', 's90'], [365, '12 months', 's365']] as const
@@ -321,6 +321,18 @@ function OneShoe({ it, byS, setTrendId, pinBtn }: { it: Item; byS: Item[]; setTr
       + (X.total <= 0 ? 'No stock left, so sales stop until you restock.' : X.wk > 0 ? 'At ' + f1(X.wk) + ' pairs a week, the ' + X.total + ' pairs left last ' + coverWords(X) + '.' : X.total + ' pairs on the shelf with no recent sales.')
       + (outSel.length ? ' Size' + (outSel.length > 1 ? 's ' : ' ') + outSel.join(', ') + (outSel.length > 1 ? ' are' : ' is') + ' sold out but still selling.' : '')
   const pinned = d.pins.includes(it.id)
+
+  // which sizes sell: pairs per size and month, summed over the chosen window
+  const [win, setWin] = useState<3 | 6 | 12>(6)
+  const sm = sizeByMonth(d.monthlySize, it.id, today)
+  const rows = X.sizes.map(z => { const m = sm[z] ?? Array(12).fill(0), sum = m.slice(12 - win).reduce((a, b) => a + b, 0); return { z, m, sum, left: st(it.id, z) } })
+  const wSum = rows.reduce((a, r) => a + r.sum, 0), smax = Math.max(1, ...rows.flatMap(r => r.m))
+  const ranked = rows.filter(r => r.sum > 0).sort((a, b) => b.sum - a.sum)
+  const topS = ranked[0]
+  const sizeInsight = !topS ? 'No sales in the last ' + win + ' months, so there is no size pattern yet.'
+    : 'Size ' + topS.z + ' sells the most: ' + topS.sum + ' of ' + wSum + ' pairs (' + Math.round((topS.sum / wSum) * 100) + '%) in the last ' + win + ' months'
+      + (ranked[1] ? ', then size ' + ranked.slice(1, 3).map(r => r.z + ' (' + r.sum + ')').join(' and ') : '') + '.'
+      + (topS.left <= 1 ? ' Size ' + topS.z + ' is ' + (topS.left <= 0 ? 'sold out' : 'down to its last pair') + '. Restock it first.' : '')
   const stats = [
     { l: 'Sold, 12 months', v: n0(tot), s: 'pairs', c: 'var(--ink)' },
     { l: 'Monthly average', v: f1(avg), s: 'pairs a month', c: 'var(--ink)' },
@@ -387,6 +399,39 @@ function OneShoe({ it, byS, setTrendId, pinBtn }: { it: Item; byS: Item[]; setTr
             )
           })}
         </div>
+      </div>
+      <div className="col" style={{ gap: 12, borderTop: '1px solid var(--line)', paddingTop: 18 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <div><div style={{ fontSize: 14, fontWeight: 700 }}>Which sizes sell, month by month</div><div className="muted" style={{ fontSize: 12 }}>Pairs sold per size in each of the last 12 months. Darker = more.</div></div>
+          <div role="group" aria-label="Months to total" style={{ display: 'flex', gap: 4, padding: 3, background: 'var(--sunk)', borderRadius: 10 }}>
+            {([3, 6, 12] as const).map(w => <button key={w} onClick={() => setWin(w)} aria-pressed={win === w} style={{ height: 30, padding: '0 12px', border: 0, borderRadius: 7, background: win === w ? 'var(--acc)' : 'transparent', color: win === w ? 'var(--acc-ink)' : 'var(--ink)', fontWeight: 600, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}>{w} months</button>)}
+          </div>
+        </div>
+        <div style={{ padding: '12px 14px', borderRadius: 12, background: 'var(--acc-soft)', fontSize: 14, lineHeight: 1.5, textWrap: 'pretty' }}>{sizeInsight}</div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 3, fontSize: 13, minWidth: 700 }}>
+            <thead><tr className="muted" style={{ fontSize: 11 }}>
+              <th style={{ textAlign: 'left', fontWeight: 600, padding: '4px 8px' }}>Size</th>
+              {mo.map((_, k) => <th key={k} style={{ fontWeight: 600, padding: '4px 0', opacity: k >= 12 - win ? 1 : 0.55 }}>{MN(k)}</th>)}
+              <th style={{ textAlign: 'right', fontWeight: 600, padding: '4px 8px', whiteSpace: 'nowrap' }}>{win} mo</th>
+              <th style={{ textAlign: 'right', fontWeight: 600, padding: '4px 8px' }}>Share</th>
+              <th style={{ textAlign: 'right', fontWeight: 600, padding: '4px 8px', whiteSpace: 'nowrap' }}>In stock</th>
+            </tr></thead>
+            <tbody>{rows.map(r => {
+              const top = r === topS
+              return (
+                <tr key={r.z}>
+                  <td style={{ padding: '6px 8px', fontWeight: 700, whiteSpace: 'nowrap' }}>{r.z}{top && <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--acc-text)' }}>top</span>}</td>
+                  {r.m.map((v, k) => { const p = Math.round((v / smax) * 85); return <td key={k} title={'Size ' + r.z + ' · ' + MN(k) + (k === 11 ? ' (so far)' : '') + ': ' + v + ' pairs'} style={{ textAlign: 'center', padding: '8px 0', borderRadius: 6, background: v ? 'color-mix(in oklch, var(--acc) ' + p + '%, var(--surface))' : 'var(--sunk)', color: p > 50 ? 'var(--acc-ink)' : v ? 'var(--ink)' : 'var(--muted)', fontWeight: 600, minWidth: 32, opacity: k >= 12 - win ? 1 : 0.55 }}>{v || '–'}</td> })}
+                  <td style={{ textAlign: 'right', padding: '6px 8px', fontWeight: 700 }}>{r.sum}</td>
+                  <td className="muted" style={{ textAlign: 'right', padding: '6px 8px' }}>{wSum ? Math.round((r.sum / wSum) * 100) + '%' : '–'}</td>
+                  <td style={{ textAlign: 'right', padding: '6px 8px', fontWeight: 600, color: r.left <= 0 ? 'var(--neg)' : r.left === 1 ? 'var(--warn)' : 'var(--ink)' }}>{r.left}</td>
+                </tr>
+              )
+            })}</tbody>
+          </table>
+        </div>
+        <div className="muted" style={{ fontSize: 11 }}>{MN(11)} is the current month so far. Faded months fall outside the {win}-month total.</div>
       </div>
     </section>
   )

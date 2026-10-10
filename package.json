@@ -10,6 +10,7 @@
     "test": "node --test --experimental-strip-types src/lib/stats.test.ts",
     "deploy": "npm run build && wrangler deploy",
     "import": "node --env-file-if-exists=.env scripts/import-stock.mjs",
+    "import-sales": "node --env-file-if-exists=.env scripts/import-sales.mjs",
     "test:db": "node supabase/schema.test.mjs"
   },
   "dependencies": {

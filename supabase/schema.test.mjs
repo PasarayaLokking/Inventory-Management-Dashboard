@@ -7,6 +7,7 @@ import assert from 'node:assert/strict'
 const migration = readFileSync(new URL('./migrations/0001_schema.sql', import.meta.url), 'utf8')
 const whatsapp = readFileSync(new URL('./migrations/0002_whatsapp_alarm.sql', import.meta.url), 'utf8').replace(/create extension .*/, '') // pg_net is stubbed below
 const returns = readFileSync(new URL('./migrations/0003_returns.sql', import.meta.url), 'utf8')
+const soldBySize = readFileSync(new URL('./migrations/0004_sold_monthly_size.sql', import.meta.url), 'utf8')
 const db = new PGlite()
 let pass = 0
 const ok = (name) => { pass++; console.log('  ✔ ' + name) }
@@ -29,6 +30,7 @@ await db.exec(`
 await db.exec(migration)
 await db.exec(whatsapp)
 await db.exec(returns)
+await db.exec(soldBySize)
 ok('migrations run')
 
 const ADMIN = '00000000-0000-0000-0000-00000000000a', STAFF = '00000000-0000-0000-0000-00000000000b'
@@ -113,6 +115,9 @@ assert.deepEqual(daily.map(r => [r.size, r.pairs]), [[5, 1]]) // the voided staf
 const monthly = await as(STAFF, `select pairs from sold_monthly where item_id=$1`, [item.id])
 assert.equal(monthly[0].pairs, 1)
 ok('sold_daily / sold_monthly count only live sales')
+const bySize = await as(STAFF, `select size, pairs from sold_monthly_size where item_id=$1`, [item.id])
+assert.deepEqual(bySize.map(r => [r.size, r.pairs]), [[5, 1]])
+ok('sold_monthly_size matches sold_daily, without undone sales')
 
 await as(STAFF, `select void_movement($1)`, [await move(STAFF, 'ret', [{ item_id: item.id, size: 6, qty: 1 }])])
 const ins = await as(STAFF, `select type, size, pairs from in_daily where item_id=$1 order by type`, [item.id])

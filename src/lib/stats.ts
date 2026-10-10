@@ -16,6 +16,7 @@ export type Line = { item_id: string; size: number; qty: number }
 export type Movement = { id: string; type: MoveType; occurred_on: string; note: string; created_by: string | null; created_at: string; movement_lines: Line[] }
 export type SoldDay = { item_id: string; size: number; day: string; pairs: number }
 export type SoldMonth = { item_id: string; month: string; pairs: number; last_day: string }
+export type SoldMonthSize = { item_id: string; size: number; month: string; pairs: number }
 /** Stock in per day: 'in' = Supply, 'ret' = Return (in_daily view). */
 export type InDay = { item_id: string; size: number; type: 'in' | 'ret'; day: string; pairs: number }
 export type StockFn = (itemId: string, size: number) => number
@@ -85,6 +86,17 @@ export function buildStats(items: Item[], st: StockFn, daily: SoldDay[], monthly
     a.coverTxt = a.total <= 0 ? 'Out' : a.cover === null ? 'No sales' : a.cover >= 52 ? '52+ wk' : a.cover < 1 ? '<1 wk' : Math.round(a.cover) + ' wk'
   }
   return S
+}
+
+/** One shoe's pairs sold per size and month: size → 12 months (11 = this month so far). */
+export function sizeByMonth(rows: SoldMonthSize[], itemId: string, today: Date) {
+  const out: Record<number, number[]> = {}
+  for (const r of rows) {
+    const mi = monthIdx(r.month, today)
+    if (r.item_id !== itemId || mi < 0 || mi > 11) continue
+    ;(out[r.size] ||= Array(12).fill(0))[mi] += r.pairs
+  }
+  return out
 }
 
 /** Pairs of one stock-in kind over the last `days` days (today counts as day 0), per item or per any key. */

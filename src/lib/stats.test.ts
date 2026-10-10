@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildStats, search, alarmTh, alarmCheck, trendOf, toCsv, daysAgo, inSum } from './stats.ts'
+import { buildStats, search, alarmTh, alarmCheck, trendOf, toCsv, daysAgo, inSum, sizeByMonth } from './stats.ts'
 
 const today = new Date(2026, 9, 7) // 7 Oct 2026
 const item = (id: string, over = {}) => ({ id, code: 'K' + id, tag: 'Shoe ' + id, colour: 'Black', brand: 'Bata', details: '', note: '', category_id: 'c1', size_system: 'UK' as const, size_from: 4, size_to: 6, alarm_on: null, alarm_th: null, alarm_why: '', removed_at: null, ...over })
@@ -80,4 +80,18 @@ test('trend and csv', () => {
   assert.equal(trendOf([0, 0, 0, 0, 0, 10, 10, 10, 15, 15, 15, 0]), 50)
   assert.equal(trendOf(Array(12).fill(0)), null)
   assert.equal(toCsv([['a,b', 'say "hi"', 3]]), '"a,b","say ""hi""",3')
+})
+
+test('sizeByMonth groups one shoe by size and month, this month last', () => {
+  const rows = [
+    { item_id: 'a', size: 5, month: '2026-10-01', pairs: 2 }, // this month = index 11
+    { item_id: 'a', size: 5, month: '2026-08-01', pairs: 4 },
+    { item_id: 'a', size: 6, month: '2025-11-01', pairs: 1 }, // oldest month shown = index 0
+    { item_id: 'a', size: 6, month: '2025-10-01', pairs: 9 }, // 12 months back: outside the window
+    { item_id: 'b', size: 5, month: '2026-10-01', pairs: 7 }, // another shoe
+  ]
+  const out = sizeByMonth(rows, 'a', today)
+  assert.deepEqual(out[5], [0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 2]) // Aug = 9, Oct = 11
+  assert.equal(out[6][0], 1)
+  assert.equal(out[6].reduce((a, b) => a + b, 0), 1)
 })
